@@ -2,28 +2,25 @@
   <div id="app">
     <v-app>
       <login @logeado="onLog" v-if="!logeado" />
-      <cambiar-password v-if="debeCambiarPassword"/>
+      <cambiar-password v-if="debeCambiarPassword" />
       <div v-if="logeado && !debeCambiarPassword">
         <encabezado />
         <v-main>
           <v-container fluid>
-            <router-view/>
-            <pie-component />
+            <router-view />
           </v-container>
         </v-main>
-       
       </div>
-        <v-snackbar
+
+      <v-snackbar
         v-model="mostrarMensaje"
         :timeout="3000"
         :color="mensaje.color"
         top
-        >
-            {{ mensaje.texto }}
-        </v-snackbar>
+      >
+        {{ mensaje.texto }}
+      </v-snackbar>
     </v-app>
-
-
   </div>
 </template>
 
@@ -31,91 +28,95 @@
 import Encabezado from './components/Encabezado.vue'
 import Login from './components/Usuarios/Login.vue'
 import CambiarPassword from './components/Usuarios/CambiarPassword.vue'
-import PieComponent from './components/Dialogos/PieComponent.vue'
 import HttpService from './Servicios/HttpService'
 
 export default {
   name: 'App',
-  components: { Encabezado, Login, CambiarPassword, PieComponent },
+  components: {
+    Encabezado,
+    Login,
+    CambiarPassword,
+  },
 
-  data:()=>({
+  data: () => ({
     logeado: false,
     debeCambiarPassword: false,
     mostrarMensaje: false,
     mensaje: {
-      texto: "",
-      color:""
-    }
+      texto: '',
+      color: '',
+    },
   }),
 
-  mounted(){
+  mounted() {
     this.obtenerInformacionNegocio()
     let logeado = this.verificarSesion()
-    if(logeado) {
+    if (logeado) {
       this.logeado = true
     }
   },
 
   methods: {
     onLog(respuesta) {
-      console.log(respuesta)
-      if(!respuesta.resultado) {
+      if (!respuesta.resultado) {
         this.mostrarMensaje = true
         this.mensaje = {
-          texto: "Datos incorrectos, verifica la información",
-          color: "error"
+          texto: 'Datos incorrectos, verifica la información',
+          color: 'error',
         }
         return
       }
 
-      if(respuesta.resultado === "cambia") {
+      if (respuesta.resultado === 'cambia') {
         this.mostrarMensaje = true
         this.mensaje = {
-          texto: "Datos correctos. Por favor cambia tu contraseña",
-          color: "indigo"
+          texto: 'Datos correctos. Por favor cambia tu contraseña',
+          color: 'indigo',
         }
         this.debeCambiarPassword = true
         this.logeado = true
-        this.establecerUsuario(respuesta.datos.nombreUsuario, respuesta.datos.idUsuario)
+        this.establecerUsuario(
+          respuesta.datos.nombreUsuario,
+          respuesta.datos.idUsuario
+        )
         return
       }
 
-      if(respuesta.resultado){
+      if (respuesta.resultado) {
         this.logeado = true
         localStorage.setItem('logeado', true)
-        this.establecerUsuario(respuesta.datos.nombreUsuario, respuesta.datos.idUsuario)
+        this.establecerUsuario(
+          respuesta.datos.nombreUsuario,
+          respuesta.datos.idUsuario
+        )
         this.mostrarMensaje = true
         this.mensaje = {
-          texto: "Datos correctos. Bienvenido",
-          color: "success"
+          texto: 'Datos correctos. Bienvenido',
+          color: 'success',
         }
-        this.$router.push( { name: "InicioComponent"} )
+        this.$router.push({ name: 'InicioComponent' })
       }
-      
     },
 
-    verificarSesion(){
-      let logeado = localStorage.getItem('logeado')
-      if(logeado) {
-        return logeado
-      }
-      return false
+    verificarSesion() {
+      return localStorage.getItem('logeado') || false
     },
 
-    establecerUsuario(usuario, id){
+    establecerUsuario(usuario, id) {
       localStorage.setItem('nombreUsuario', usuario)
       localStorage.setItem('idUsuario', id)
     },
 
-    obtenerInformacionNegocio(){
-      HttpService.obtenerConDatos({ metodo: 'obtener'}, 'ajustes.php')
-      .then(resultado => {
-          localStorage.setItem("nombreGimnasio", resultado.nombre)
-          localStorage.setItem("logoGimnasio", resultado.logo)
-          localStorage.setItem("telefonoGimnasio", resultado.telefono)
-          localStorage.setItem("direccionGimnasio", resultado.direccion)
-      })
-    }
-  }
+    obtenerInformacionNegocio() {
+      HttpService.obtenerConDatos({ metodo: 'obtener' }, 'ajustes.php').then(
+        (resultado) => {
+          localStorage.setItem('nombreGimnasio', resultado.nombre)
+          localStorage.setItem('logoGimnasio', resultado.logo)
+          localStorage.setItem('telefonoGimnasio', resultado.telefono)
+          localStorage.setItem('direccionGimnasio', resultado.direccion)
+        }
+      )
+    },
+  },
 }
 </script>

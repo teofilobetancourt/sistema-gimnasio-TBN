@@ -11,7 +11,7 @@
           item-text="nombre"
           item-value="id"
           clearable
-          label="Escribe el nombre o la matrícula del miembro"
+          label="Escribe el nombre o la cedula del miembro"
           return-object
           v-model="miembroSeleccionado"
         >

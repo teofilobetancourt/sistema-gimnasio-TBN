@@ -9,7 +9,7 @@
           <v-text-field
             v-model="busqueda"
             append-icon="mdi-magnify"
-            label="Buscar por nombre o matrícula"
+            label="Buscar por nombre o cédula"
             single-line
             hide-details
             clearable

@@ -19,7 +19,10 @@
         <v-card class="pa-3 mb-2 fill-height" elevation="2">
           <v-icon size="30" class="mb-1" :color="grafica.color">mdi-account</v-icon>
           <div class="text-h6">{{ grafica.titulo }}</div>
-          <div class="text-subtitle-2 mb-2">{{ grafica.subtitulo }}</div>
+          <div class="text-subtitle-2 mb-2">
+            {{ grafica.subtitulo }}
+            <v-chip color="primary" dark small class="ml-2">{{ grafica.etiquetas.length }}</v-chip>
+          </div>
           <div class="scroll-box no-scrollbar">
             <div v-for="(nombre, j) in grafica.etiquetas" :key="'miembro-' + i + '-' + j" class="nombre-item">
               <v-icon left small class="mr-2" color="grey lighten-1">mdi-account-circle</v-icon>

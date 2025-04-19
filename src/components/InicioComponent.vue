@@ -119,7 +119,7 @@ export default {
             etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre),
             color: "red darken-1",
             titulo: "Membresías por vencer",
-            subtitulo: "Miembros próximas a vencer",
+            subtitulo: "Miembros próximos a vencer",
           },
           {
             etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre),

@@ -17,17 +17,32 @@
     <v-row dense no-gutters class="ma-0 pa-0">
       <v-col cols="12" md="4" class="pa-1 ma-0" v-for="(grafica, i) in graficasVisitas" :key="'grafica-' + i">
         <v-card class="pa-3 mb-2 fill-height" elevation="2">
-          <v-icon size="30" class="mb-1" :color="grafica.color">mdi-account</v-icon>
-          <div class="text-h6">{{ grafica.titulo }}</div>
-          <div class="text-subtitle-2 mb-2">
-            {{ grafica.subtitulo }}
-            <v-chip color="primary" dark small class="ml-2">{{ grafica.etiquetas.length }}</v-chip>
-          </div>
-          <div class="scroll-box no-scrollbar">
-            <div v-for="(nombre, j) in grafica.etiquetas" :key="'miembro-' + i + '-' + j" class="nombre-item">
-              <v-icon left small class="mr-2" color="grey lighten-1">mdi-account-circle</v-icon>
-              <span>{{ j + 1 }}. {{ nombre }}</span>
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <v-icon size="30" class="mb-1" :color="grafica.color">mdi-account</v-icon>
+              <div class="text-h6">{{ grafica.titulo }}</div>
+              <div class="text-subtitle-2 mb-2">
+                {{ grafica.subtitulo }}
+                <v-chip color="primary" dark small class="ml-2">{{ grafica.etiquetas.length }}</v-chip>
+              </div>
             </div>
+          </div>
+          <v-text-field
+            v-model="grafica.search"
+            dense
+            hide-details
+            solo
+            flat
+            placeholder="Buscar nombre"
+            prepend-inner-icon="mdi-account-search"
+          ></v-text-field>
+          <div class="scroll-box no-scrollbar">
+            <div
+              v-for="(nombre, j) in grafica.etiquetas.filter(n => !grafica.search || n.toLowerCase().includes(grafica.search.toLowerCase()))"
+              :key="'miembro-' + i + '-' + j"
+              class="nombre-item"
+              v-html="resaltarCoincidencia(nombre, grafica.search, j + 1)"
+            ></div>
           </div>
         </v-card>
       </v-col>
@@ -77,7 +92,6 @@ import SparklineComponent from "./Dialogos/SparklineComponent.vue";
 export default {
   name: "InicioComponent",
   components: { SparklineComponent },
-
   data: () => ({
     cargando: false,
     datosVisitas: [],
@@ -85,12 +99,16 @@ export default {
     graficasVisitas: [],
     graficasPagos: [],
   }),
-
   mounted() {
     this.obtenerDatos();
   },
-
   methods: {
+    resaltarCoincidencia(nombre, texto, index) {
+      if (!texto) return `<span>${index}. ${nombre}</span>`;
+      const regex = new RegExp(`(${texto})`, "gi");
+      const resaltado = nombre.replace(regex, '<mark>$1</mark>');
+      return `<span>${index}. ${resaltado}</span>`;
+    },
     obtenerDatos() {
       this.cargando = true;
       HttpService.obtenerConDatos({ metodo: "obtener" }, "inicio.php").then((resultado) => {
@@ -100,59 +118,34 @@ export default {
           { color: "indigo darken-1", icono: "mdi-calendar-month", nombre: "Membresías mes", total: resultado.membresiasMes },
           { color: "purple darken-1", icono: "mdi-calendar-star", nombre: "Total membresías", total: resultado.membresiasTotales },
         ];
-
         this.datosPagos = [
           { color: "teal darken-1", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + resultado.datosPagos.pagosHoy },
           { color: "green darken-1", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + resultado.datosPagos.pagosSemana },
           { color: "orange darken-1", icono: "mdi-calendar-month", nombre: "Ingreso mensual", total: "$" + resultado.datosPagos.pagosMes },
           { color: "blue darken-1", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + resultado.datosPagos.totalPagos },
         ];
-
         this.graficasVisitas = [
-          {
-            etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre),
-            color: "pink darken-1",
-            titulo: "Membresías vencidas",
-            subtitulo: "Miembros finalizadas",
-          },
-          {
-            etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre),
-            color: "red darken-1",
-            titulo: "Membresías por vencer",
-            subtitulo: "Miembros próximos a vencer",
-          },
-          {
-            etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre),
-            color: "indigo darken-1",
-            titulo: "Membresías activas",
-            subtitulo: "Miembros actualmente activos",
-          },
+          { etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre), color: "pink darken-1", titulo: "Membresías vencidas", subtitulo: "Miembros finalizadas", search: "" },
+          { etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre), color: "red darken-1", titulo: "Membresías por vencer", subtitulo: "Miembros próximos a vencer", search: "" },
+          { etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre), color: "indigo darken-1", titulo: "Membresías activas", subtitulo: "Miembros actualmente activos", search: "" },
         ];
-
         this.graficasPagos = [
           {
             etiquetas: Utiles.obtenerClaves(Utiles.cambiarDiaSemana(resultado.pagosSemana)),
             valores: Utiles.obtenerValoresPagos(Utiles.cambiarDiaSemana(resultado.pagosSemana)),
-            color: "green darken-1",
-            titulo: "Pagos semana",
-            subtitulo: "Pagos registrados esta semana",
+            color: "green darken-1", titulo: "Pagos semana", subtitulo: "Pagos registrados esta semana"
           },
           {
             etiquetas: Utiles.obtenerClaves(resultado.pagosMes),
             valores: Utiles.obtenerValoresPagos(resultado.pagosMes),
-            color: "orange darken-1",
-            titulo: "Pagos mes",
-            subtitulo: "Pagos registrados este mes",
+            color: "orange darken-1", titulo: "Pagos mes", subtitulo: "Pagos registrados este mes"
           },
           {
             etiquetas: Utiles.obtenerClaves(Utiles.cambiarNumeroANombreMes(resultado.pagosMeses)),
             valores: Utiles.obtenerValoresPagos(Utiles.cambiarNumeroANombreMes(resultado.pagosMeses)),
-            color: "blue darken-1",
-            titulo: "Pagos meses",
-            subtitulo: "Pagos registrados por mes",
+            color: "blue darken-1", titulo: "Pagos meses", subtitulo: "Pagos registrados por mes"
           },
         ];
-
         this.cargando = false;
       });
     },
@@ -165,16 +158,9 @@ export default {
   animation: fadeInUp 0.5s ease forwards;
 }
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
 .v-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -182,18 +168,15 @@ export default {
   transform: scale(1.05);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
-
 .scroll-box {
   max-height: 180px;
   overflow-y: auto;
   overflow-x: hidden;
   margin-top: 8px;
 }
-
 .scroll-box::-webkit-scrollbar:horizontal {
   display: none;
 }
-
 .nombre-item {
   display: flex;
   align-items: center;
@@ -208,5 +191,10 @@ export default {
   box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
   transform: scale(1.01);
   cursor: pointer;
+}
+mark {
+  background-color: #ffeb3b;
+  padding: 0 2px;
+  border-radius: 3px;
 }
 </style>

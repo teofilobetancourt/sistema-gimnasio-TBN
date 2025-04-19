@@ -13,21 +13,21 @@
       </transition-group>
     </v-row>
 
-    <!-- Gráficas de membresías -->
+    <!-- Listado vertical de membresías con animación -->
     <v-row dense no-gutters class="ma-0 pa-0">
-      <transition-group name="fade" tag="div" class="d-flex flex-wrap ma-0 pa-0" style="width: 100%;">
-        <v-col cols="12" md="4" class="pa-1 ma-0" style="max-width: 33.33%;" v-for="(grafica, i) in graficasVisitas" :key="'graf-visita-' + i" :style="{ animationDelay: (i * 100) + 'ms' }">
-          <v-card class="pa-3 mb-2 fill-height" elevation="2">
-            <sparkline-component
-              :etiquetas="grafica.etiquetas"
-              :valores="grafica.valores"
-              :color="grafica.color"
-              :titulo="grafica.titulo"
-              :subtitulo="grafica.subtitulo"
-            />
-          </v-card>
-        </v-col>
-      </transition-group>
+      <v-col cols="12" md="4" class="pa-1 ma-0" v-for="(grafica, i) in graficasVisitas" :key="'grafica-' + i">
+        <v-card class="pa-3 mb-2 fill-height" elevation="2">
+          <v-icon size="30" class="mb-1" :color="grafica.color">mdi-account</v-icon>
+          <div class="text-h6">{{ grafica.titulo }}</div>
+          <div class="text-subtitle-2 mb-2">{{ grafica.subtitulo }}</div>
+          <div class="scroll-box no-scrollbar">
+            <div v-for="(nombre, j) in grafica.etiquetas" :key="'miembro-' + i + '-' + j" class="nombre-item">
+              <v-icon left small class="mr-2" color="grey lighten-1">mdi-account-circle</v-icon>
+              <span>{{ j + 1 }}. {{ nombre }}</span>
+            </div>
+          </div>
+        </v-card>
+      </v-col>
     </v-row>
 
     <!-- Cartas de pagos -->
@@ -91,7 +91,6 @@ export default {
     obtenerDatos() {
       this.cargando = true;
       HttpService.obtenerConDatos({ metodo: "obtener" }, "inicio.php").then((resultado) => {
-        // Cartas de membresías
         this.datosVisitas = [
           { color: "pink darken-1", icono: "mdi-calendar", nombre: "Membresías hoy", total: resultado.membresiasHoy },
           { color: "red darken-1", icono: "mdi-calendar-range", nombre: "Membresías semana", total: resultado.membresiasSemana },
@@ -99,7 +98,6 @@ export default {
           { color: "purple darken-1", icono: "mdi-calendar-star", nombre: "Total membresías", total: resultado.membresiasTotales },
         ];
 
-        // Cartas de pagos
         this.datosPagos = [
           { color: "teal darken-1", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + resultado.datosPagos.pagosHoy },
           { color: "green darken-1", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + resultado.datosPagos.pagosSemana },
@@ -107,33 +105,27 @@ export default {
           { color: "blue darken-1", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + resultado.datosPagos.totalPagos },
         ];
 
-        // Gráficas de membresías
         this.graficasVisitas = [
           {
             etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre),
-            valores: (resultado.miembrosVencidos || []).map(() => 1),
             color: "pink darken-1",
             titulo: "Membresías vencidas",
             subtitulo: "Miembros finalizadas",
           },
           {
             etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre),
-            valores: (resultado.miembrosPorVencer || []).map(() => 1),
             color: "red darken-1",
             titulo: "Membresías por vencer",
             subtitulo: "Miembros próximas a vencer",
           },
           {
             etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre),
-            valores: (resultado.miembrosActivos || []).map(() => 1),
             color: "indigo darken-1",
             titulo: "Membresías activas",
             subtitulo: "Miembros actualmente activos",
           },
         ];
 
-
-        // Gráficas de pagos
         this.graficasPagos = [
           {
             etiquetas: Utiles.obtenerClaves(Utiles.cambiarDiaSemana(resultado.pagosSemana)),
@@ -186,5 +178,32 @@ export default {
 .v-card:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.scroll-box {
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 8px;
+}
+
+.scroll-box::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
+.nombre-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 15px;
+  border-bottom: 1px solid #ccc;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+.nombre-item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+  transform: scale(1.01);
+  cursor: pointer;
 }
 </style>

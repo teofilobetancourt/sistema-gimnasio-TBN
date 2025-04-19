@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-0 ma-0 fill-height" style="max-width: 100vw !important;">
-    <!-- Cartas de visitas -->
+    <!-- Cartas de visitas (membresías) -->
     <v-row dense no-gutters class="ma-0 pa-0">
       <transition-group name="fade" tag="div" class="d-flex flex-wrap ma-0 pa-0" style="width: 100%;">
         <v-col cols="12" md="3" class="pa-1 ma-0" style="max-width: 25%;" v-for="(card, index) in datosVisitas" :key="'visita-' + index" :style="{ animationDelay: (index * 100) + 'ms' }">
@@ -13,7 +13,7 @@
       </transition-group>
     </v-row>
 
-    <!-- Gráficas de visitas -->
+    <!-- Gráficas de membresías -->
     <v-row dense no-gutters class="ma-0 pa-0">
       <transition-group name="fade" tag="div" class="d-flex flex-wrap ma-0 pa-0" style="width: 100%;">
         <v-col cols="12" md="4" class="pa-1 ma-0" style="max-width: 33.33%;" v-for="(grafica, i) in graficasVisitas" :key="'graf-visita-' + i" :style="{ animationDelay: (i * 100) + 'ms' }">
@@ -91,32 +91,49 @@ export default {
     obtenerDatos() {
       this.cargando = true;
       HttpService.obtenerConDatos({ metodo: "obtener" }, "inicio.php").then((resultado) => {
-        this.crearCartas(resultado.datosVisitas, resultado.datosPagos);
-
-        this.graficasVisitas = [
-          {
-            etiquetas: Utiles.obtenerClaves(resultado.visitasHora),
-            valores: Utiles.obtenerValores(resultado.visitasHora),
-            color: "pink darken-1",
-            titulo: "Membresias vencidas",
-            subtitulo: "Membresias finalizadas",
-          },
-          {
-            etiquetas: Utiles.obtenerClaves(Utiles.cambiarDiaSemana(resultado.visitasSemana)),
-            valores: Utiles.obtenerValores(Utiles.cambiarDiaSemana(resultado.visitasSemana)),
-            color: "red darken-1",
-            titulo: "Membresias por vencer",
-            subtitulo: "Membresias pronto a vencer",
-          },
-          {
-            etiquetas: Utiles.obtenerClaves(resultado.visitasMes),
-            valores: Utiles.obtenerValores(resultado.visitasMes),
-            color: "indigo darken-1",
-            titulo: "Membresias activas",
-            subtitulo: "Membresias activas",
-          }
+        // Cartas de membresías
+        this.datosVisitas = [
+          { color: "pink darken-1", icono: "mdi-calendar", nombre: "Membresías hoy", total: resultado.membresiasHoy },
+          { color: "red darken-1", icono: "mdi-calendar-range", nombre: "Membresías semana", total: resultado.membresiasSemana },
+          { color: "indigo darken-1", icono: "mdi-calendar-month", nombre: "Membresías mes", total: resultado.membresiasMes },
+          { color: "purple darken-1", icono: "mdi-calendar-star", nombre: "Total membresías", total: resultado.membresiasTotales },
         ];
 
+        // Cartas de pagos
+        this.datosPagos = [
+          { color: "teal darken-1", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + resultado.datosPagos.pagosHoy },
+          { color: "green darken-1", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + resultado.datosPagos.pagosSemana },
+          { color: "orange darken-1", icono: "mdi-calendar-month", nombre: "Ingreso mensual", total: "$" + resultado.datosPagos.pagosMes },
+          { color: "blue darken-1", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + resultado.datosPagos.totalPagos },
+        ];
+
+        // Gráficas de membresías
+        this.graficasVisitas = [
+          {
+            etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre),
+            valores: (resultado.miembrosVencidos || []).map(() => 1),
+            color: "pink darken-1",
+            titulo: "Membresías vencidas",
+            subtitulo: "Miembros finalizadas",
+          },
+          {
+            etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre),
+            valores: (resultado.miembrosPorVencer || []).map(() => 1),
+            color: "red darken-1",
+            titulo: "Membresías por vencer",
+            subtitulo: "Miembros próximas a vencer",
+          },
+          {
+            etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre),
+            valores: (resultado.miembrosActivos || []).map(() => 1),
+            color: "indigo darken-1",
+            titulo: "Membresías activas",
+            subtitulo: "Miembros actualmente activos",
+          },
+        ];
+
+
+        // Gráficas de pagos
         this.graficasPagos = [
           {
             etiquetas: Utiles.obtenerClaves(Utiles.cambiarDiaSemana(resultado.pagosSemana)),
@@ -137,30 +154,13 @@ export default {
             valores: Utiles.obtenerValoresPagos(Utiles.cambiarNumeroANombreMes(resultado.pagosMeses)),
             color: "blue darken-1",
             titulo: "Pagos meses",
-            subtitulo: "Pagos registrados mes",
-          }
+            subtitulo: "Pagos registrados por mes",
+          },
         ];
 
         this.cargando = false;
       });
     },
-
-    crearCartas(visitas, pagos) {
-  this.datosVisitas = [
-    { color: "pink darken-1", icono: "mdi-calendar", nombre: "Membresías hoy", total: visitas.visitasHoy },
-    { color: "red darken-1", icono: "mdi-calendar-range", nombre: "Membresías semana", total: visitas.visitasSemana },
-    { color: "indigo darken-1", icono: "mdi-calendar-month", nombre: "Membresías mes", total: visitas.visitasMes },
-    { color: "purple darken-1", icono: "mdi-calendar-star", nombre: "Total membresías", total: visitas.totalVisitas },
-  ];
-
-  this.datosPagos = [
-    { color: "teal darken-1", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + pagos.pagosHoy },
-    { color: "green darken-1", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + pagos.pagosSemana },
-    { color: "orange darken-1", icono: "mdi-calendar-month", nombre: "Ingreso mensual", total: "$" + pagos.pagosMes },
-    { color: "blue darken-1", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + pagos.totalPagos },
-  ];
-},
-
   },
 };
 </script>

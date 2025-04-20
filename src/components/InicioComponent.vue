@@ -1,13 +1,13 @@
 <template>
   <v-container fluid class="pa-0 ma-0 fill-height" style="max-width: 100vw !important;">
-    <!-- Cartas de membresías -->
+    <!-- Cartas de visitas (membresías) -->
     <v-row dense no-gutters class="ma-0 pa-4">
       <transition-group name="fade" tag="div" class="d-flex flex-wrap" style="width: 100%;">
         <v-col cols="12" md="3" class="pa-2" v-for="(card, index) in datosVisitas" :key="'visita-' + index">
           <div class="glass-card-custom">
             <v-icon size="40" :color="card.color" class="mb-2">{{ card.icono }}</v-icon>
             <div class="label">{{ card.nombre }}</div>
-            <div class="counter">{{ card.total }}</div>
+            <div class="counter">{{ Math.floor(card.valorAnimado) }}</div>
           </div>
         </v-col>
       </transition-group>
@@ -52,7 +52,7 @@
           <div class="glass-card-custom">
             <v-icon size="40" :color="card.color" class="mb-2">{{ card.icono }}</v-icon>
             <div class="label">{{ card.nombre }}</div>
-            <div class="counter">{{ card.total }}</div>
+            <div class="counter">{{ card.valorAnimado }}</div>
           </div>
         </v-col>
       </transition-group>
@@ -98,6 +98,41 @@ export default {
     this.obtenerDatos();
   },
   methods: {
+    animarTarjetasVisitas() {
+      this.datosVisitas.forEach(card => {
+        card.valorAnimado = 0;
+        const total = typeof card.total === 'string' ? parseFloat(card.total.replace('$', '')) : card.total;
+        const incremento = total / 40;
+        let paso = 0;
+        const intervalo = setInterval(() => {
+          card.valorAnimado += incremento;
+          paso++;
+          if (paso >= 40) {
+            card.valorAnimado = total;
+            clearInterval(intervalo);
+          }
+        }, 25);
+      });
+    },
+    animarTarjetasPagos() {
+      this.datosPagos.forEach(card => {
+        const valorNumerico = parseFloat(card.total.replace('$', '')) || 0;
+        card.valorAnimado = '$0.00';
+        let actual = 0;
+        const incremento = valorNumerico / 40;
+        let paso = 0;
+        const intervalo = setInterval(() => {
+          actual += incremento;
+          paso++;
+          if (paso >= 40) {
+            card.valorAnimado = '$' + valorNumerico.toFixed(2);
+            clearInterval(intervalo);
+          } else {
+            card.valorAnimado = '$' + actual.toFixed(2);
+          }
+        }, 25);
+      });
+    },
     resaltarCoincidencia(nombre, texto, index) {
       if (!texto) return `<span>${index}. ${nombre}</span>`;
       const regex = new RegExp(`(${texto})`, "gi");
@@ -108,22 +143,27 @@ export default {
       this.cargando = true;
       HttpService.obtenerConDatos({ metodo: "obtener" }, "inicio.php").then((resultado) => {
         this.datosVisitas = [
-          { color: "pink", icono: "mdi-calendar", nombre: "Membresías hoy", total: resultado.membresiasHoy },
-          { color: "red", icono: "mdi-calendar-range", nombre: "Membresías semana", total: resultado.membresiasSemana },
-          { color: "indigo", icono: "mdi-calendar-month", nombre: "Membresías mes", total: resultado.membresiasMes },
-          { color: "purple", icono: "mdi-calendar-star", nombre: "Total membresías", total: resultado.membresiasTotales },
+          { color: "pink", icono: "mdi-calendar", nombre: "Membresías hoy", total: resultado.membresiasHoy, valorAnimado: 0 },
+          { color: "red", icono: "mdi-calendar-range", nombre: "Membresías semana", total: resultado.membresiasSemana, valorAnimado: 0 },
+          { color: "indigo", icono: "mdi-calendar-month", nombre: "Membresías mes", total: resultado.membresiasMes, valorAnimado: 0 },
+          { color: "purple", icono: "mdi-calendar-star", nombre: "Total membresías", total: resultado.membresiasTotales, valorAnimado: 0 },
         ];
+        this.animarTarjetasVisitas();
+
         this.datosPagos = [
-          { color: "teal", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + resultado.datosPagos.pagosHoy },
-          { color: "green", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + resultado.datosPagos.pagosSemana },
-          { color: "orange", icono: "mdi-calendar-month", nombre: "Ingreso mensual", total: "$" + resultado.datosPagos.pagosMes },
-          { color: "blue", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + resultado.datosPagos.totalPagos },
+          { color: "teal", icono: "mdi-calendar", nombre: "Ingreso diario", total: "$" + resultado.datosPagos.pagosHoy, valorAnimado: "$0.00" },
+          { color: "green", icono: "mdi-calendar-range", nombre: "Ingreso semanal", total: "$" + resultado.datosPagos.pagosSemana, valorAnimado: "$0.00" },
+          { color: "orange", icono: "mdi-calendar-month", nombre: "Ingreso mensual", total: "$" + resultado.datosPagos.pagosMes, valorAnimado: "$0.00" },
+          { color: "blue", icono: "mdi-currency-usd", nombre: "Ingreso total", total: "$" + resultado.datosPagos.totalPagos, valorAnimado: "$0.00" },
         ];
+        this.animarTarjetasPagos();
+
         this.graficasVisitas = [
           { etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre), color: "pink", titulo: "Membresías vencidas", subtitulo: "Miembros finalizadas", search: "" },
           { etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre), color: "red", titulo: "Membresías por vencer", subtitulo: "Miembros próximos a vencer", search: "" },
           { etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre), color: "indigo", titulo: "Membresías activas", subtitulo: "Miembros actualmente activos", search: "" },
         ];
+
         this.graficasPagos = [
           {
             etiquetas: Utiles.obtenerClaves(Utiles.cambiarDiaSemana(resultado.pagosSemana)),

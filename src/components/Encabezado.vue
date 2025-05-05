@@ -56,7 +56,7 @@
 
       <!-- TÍTULO Y SUBTÍTULO -->
       <h1 class="titulo font-weight-bold">EVOLUTION FITNESS · GYM, F. P.</h1>
-      <p class="subtitulo">Bienvenido al sistema de control de membresías Evolution Fitness Gym</p>
+      <p class="subtitulo">Bienvenido al sistema de control de mensualidades Evolution Fitness Gym</p>
     </div>
 
     <!-- DRAWER lateral -->
@@ -116,8 +116,8 @@ export default {
     items: [
       { title: "Inicio", icon: "mdi-view-dashboard", link: "/" },
       { title: "Usuarios", icon: "mdi-account-box", link: "/usuarios" },
-      { title: "Miembros", icon: "mdi-weight-lifter", link: "/miembros" },
-      { title: "Membresías", icon: "mdi-wallet-membership", link: "/membresias" },
+      { title: "Mensualidades", icon: "mdi-weight-lifter", link: "/miembros" },
+      { title: "Planes", icon: "mdi-wallet-membership", link: "/membresias" },
       { title: "Pagos", icon: "mdi-account-cash", link: "/pagos" },
       { title: "Configurar", icon: "mdi-cog", link: "/configurar" },
       { title: "Mi perfil", icon: "mdi-account-key", link: "/perfil" },

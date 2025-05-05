@@ -23,7 +23,7 @@
         :loading="cargando"
         :headers="encabezadoTabla"
         :items="miembrosFiltrados"
-        item-key="matricula"
+        :item-key="'cedula'"
         class="elevation-1 table-header-bold"
         :footer-props="{ itemsPerPageText: 'Por página' }"
         show-expand
@@ -77,11 +77,20 @@
 
           <v-tooltip bottom color="success" v-if="!item.estado || item.estado === 'VENCIDO'">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon small color="success" v-bind="attrs" v-on="on" @click.stop="realizarPago(item.matricula)">
+              <v-btn icon small color="success" v-bind="attrs" v-on="on" @click.stop="realizarPago(item.cedula)">
                 <v-icon>mdi-wallet-membership</v-icon>
               </v-btn>
             </template>
             <span>Realizar pago</span>
+          </v-tooltip>
+
+          <v-tooltip bottom color="info" v-if="item.estado === 'ACTIVO'">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon small color="info" v-bind="attrs" v-on="on" @click.stop="renovarMembresia(item.cedula)">
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
+            </template>
+            <span>Renovar membresía</span>
           </v-tooltip>
         </template>
 
@@ -126,7 +135,7 @@
       </v-btn>
 
       <v-dialog v-model="mostrarRealizarPago" persistent max-width="600">
-        <realizar-pago :matricula="matriculaSeleccionada" @cerrar="cerrarDialogoPago" @pagado="onPagado" />
+        <realizar-pago :cedula="matriculaSeleccionada" @cerrar="cerrarDialogoPago" @pagado="onPagado" />
       </v-dialog>
 
       <v-dialog v-model="mostrarDialogoEliminar" max-width="500px">
@@ -146,6 +155,7 @@
   </div>
 </template>
 
+
 <script>
 import HttpService from "../../Servicios/HttpService";
 import Utiles from "../../Servicios/Utiles";
@@ -159,18 +169,16 @@ export default {
 
   data: () => ({
     encabezadoTabla: [
-  { text: "Imagen", align: "start", sortable: false, value: "imagen" },
-  { text: "Cédula", sortable: true, value: "matricula" },
-  { text: "Nombre", sortable: true, value: "nombre" },
-  { text: "Teléfono", sortable: false, value: "telefono" },
-  { text: "Estado", sortable: true, value: "estado" },
-  { text: "Inicio membresía", sortable: true, value: "fechaInicio" },
-  { text: "Fin membresía", sortable: true, value: "fechaFin" },
-  { text: "Membresía", sortable: true, value: "membresia" },
-  { text: "Opciones", value: "opciones", sortable: false },
-  
-],
-
+      { text: "Imagen", align: "start", sortable: false, value: "imagen" },
+      { text: "Cédula", sortable: true, value: "cedula" },
+      { text: "Nombre", sortable: true, value: "nombre" },
+      { text: "Teléfono", sortable: false, value: "telefono" },
+      { text: "Estado", sortable: true, value: "estado" },
+      { text: "Inicio membresía", sortable: true, value: "fechaInicio" },
+      { text: "Fin membresía", sortable: true, value: "fechaFin" },
+      { text: "Membresía", sortable: true, value: "membresia" },
+      { text: "Opciones", value: "opciones", sortable: false },
+    ],
     cargando: false,
     mostrarMensaje: false,
     mensaje: { color: "", texto: "" },
@@ -189,7 +197,7 @@ export default {
     miembrosFiltrados() {
       const texto = this.busqueda.toLowerCase();
       return this.miembros
-        .filter(m => m.nombre.toLowerCase().includes(texto) || m.matricula.toLowerCase().includes(texto))
+        .filter(m => m.nombre.toLowerCase().includes(texto) || m.cedula.toLowerCase().includes(texto))
         .sort((a, b) => {
           if ((a.estado === 'VENCIDO') !== (b.estado === 'VENCIDO')) return a.estado === 'VENCIDO' ? -1 : 1;
           return new Date(b.fechaRegistro) - new Date(a.fechaRegistro);
@@ -203,20 +211,19 @@ export default {
 
   methods: {
     generarCredencial(miembro) {
-      this.matriculaSeleccionada = miembro.matricula;
+      this.matriculaSeleccionada = miembro.cedula;
       this.miembro = miembro;
       this.mostrarCredencial = true;
     },
 
     alternarFilaExpandida(item) {
-      const index = this.filasExpandidas.findIndex(f => f.matricula === item.matricula);
+      const index = this.filasExpandidas.findIndex(f => f.cedula === item.cedula);
       if (index >= 0) {
         this.filasExpandidas.splice(index, 1);
       } else {
         this.filasExpandidas.push(item);
       }
     },
-    
     onImpreso(resultado) {
       this.mostrarCredencial = resultado;
     },
@@ -250,14 +257,15 @@ export default {
     cerrarDialogoPago(resultado) {
       this.mostrarRealizarPago = resultado;
     },
-    realizarPago(matricula) {
-      this.matriculaSeleccionada = matricula;
+    realizarPago(cedula) {
+      this.matriculaSeleccionada = cedula;
       this.mostrarRealizarPago = true;
     },
     onPagado(resultado) {
       if (resultado) {
         this.mostrarRealizarPago = false;
-        this.mostrarMensaje = { color: "success", texto: "Pago realizado con éxito" };
+        this.mostrarMensaje = true;
+        this.mensaje = { color: "success", texto: "✅ Pago realizado con éxito" };
         this.obtenerMiembros();
       }
     },
@@ -270,6 +278,11 @@ export default {
     },
     estado(val) {
       return val === "ACTIVO" ? "success" : val === "VENCIDO" ? "error" : "warning";
+    },
+    renovarMembresia(cedula) {
+      // Cambiado para abrir el diálogo de pagos
+      this.matriculaSeleccionada = cedula;
+      this.mostrarRealizarPago = true;
     },
   },
 };

@@ -14,7 +14,7 @@
                 required
                 hide-details="auto"
                 v-model="membresia.nombre"
-              ></v-text-field>
+              />
             </v-col>
             <v-col cols="12">
               <v-text-field
@@ -24,17 +24,26 @@
                 required
                 hide-details="auto"
                 v-model="membresia.duracion"
-              ></v-text-field>
+              />
             </v-col>
             <v-col cols="12">
               <v-text-field
-                label="Precio"
+                label="Precio (USD)"
                 :rules="reglas"
                 type="number"
                 required
                 hide-details="auto"
                 v-model="membresia.precio"
-              ></v-text-field>
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                label="Precio Aproximado (Bs.S)"
+                :value="precioEnBsS"
+                readonly
+                hide-details
+                outlined
+              />
             </v-col>
           </v-row>
         </v-form>
@@ -42,7 +51,7 @@
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="cerrarDialogo"> Cerrar </v-btn>
+      <v-btn color="blue darken-1" text @click="cerrarDialogo">Cerrar</v-btn>
       <v-btn
         color="blue darken-1"
         text
@@ -54,25 +63,40 @@
     </v-card-actions>
   </v-card>
 </template>
+
 <script>
 export default {
   name: "FormMembresia",
   props: ["membresia", "titulo"],
-
   data: () => ({
-    
     formValido: false,
     reglas: [(value) => !!value || "Debes colocar este campo."],
+    tasaDolar: 0,
   }),
 
-  mounted(){
-    this.formValido = false
+  mounted() {
+    this.formValido = false;
+    const tasaGuardada = localStorage.getItem('tasaBCV');
+    if (tasaGuardada) {
+      this.tasaDolar = parseFloat(tasaGuardada);
+    }
   },
+
+  computed: {
+    precioEnBsS() {
+      if (!this.tasaDolar || !this.membresia.precio) return "0,00";
+      const precioBs = this.membresia.precio * this.tasaDolar;
+      return precioBs
+        .toFixed(2)
+        .replace('.', ',')
+        .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+  },
+
   methods: {
     cerrarDialogo() {
       this.$emit("cerrado", false);
     },
-
     registrar() {
       this.$emit("registrar", this.membresia);
     },

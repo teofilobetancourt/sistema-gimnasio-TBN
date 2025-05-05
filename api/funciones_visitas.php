@@ -11,7 +11,7 @@ function obtenerVisitas($filtros) {
     $fechaInicio = (isset($filtros->fechaInicio)) ? $filtros->fechaInicio : FECHA_HOY;
     $fechaFin = (isset($filtros->fechaFin)) ? $filtros->fechaFin : FECHA_HOY;
 
-    $sentencia = "SELECT visitas.fecha, miembros.nombre, miembros.imagen, miembros.matricula, usuarios.usuario,
+    $sentencia = "SELECT visitas.fecha, miembros.nombre, miembros.imagen, miembros.cedula, usuarios.usuario,
     IFNULL(membresias.nombre, 'VISITA REGULAR') AS membresia 
     FROM visitas
     LEFT JOIN membresias ON membresias.id = visitas.idMembresia
@@ -56,7 +56,7 @@ function obtenerTotalesPorMiembro($filtros){
     $fechaInicio = (isset($filtros->fechaInicio)) ? $filtros->fechaInicio : FECHA_HOY;
     $fechaFin = (isset($filtros->fechaFin)) ? $filtros->fechaFin : FECHA_HOY;
 
-    $sentencia  = "SELECT COUNT(*) AS total, miembros.nombre, miembros.matricula, miembros.imagen FROM visitas
+    $sentencia  = "SELECT COUNT(*) AS total, miembros.nombre, miembros.cedula, miembros.imagen FROM visitas
     INNER JOIN miembros ON miembros.id = visitas.idMiembro
     WHERE DATE(visitas.fecha) >= ? AND DATE(visitas.fecha) <= ? 
     GROUP BY visitas.idMiembro
@@ -71,7 +71,7 @@ function registrarVisitaRegular($visita){
     $monto = $visita->pago;
 
     $sentenciaVisita = "INSERT INTO visitas(idUsuario, fecha) VALUES (?,?)";
-    $sentenciaPago = "INSERT INTO pagos (matricula, idMembresia, idUsuario, fecha, monto) VALUES(?,?,?,?,?)";
+    $sentenciaPago = "INSERT INTO pagos (cedula, idMembresia, idUsuario, fecha, monto) VALUES(?,?,?,?,?)";
 
     $visita = insertar($sentenciaVisita, [$idUsuario, date("Y-m-d H:i:s")]);
 

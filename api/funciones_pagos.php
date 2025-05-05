@@ -1,16 +1,15 @@
 <?php
 include_once "base_datos.php";
 
-
 function obtenerPagos($filtros){
     $fechaInicio = (isset($filtros->fechaInicio)) ? $filtros->fechaInicio : FECHA_HOY;
     $fechaFin = (isset($filtros->fechaFin)) ? $filtros->fechaFin : FECHA_HOY;
 
-    $sentencia = "SELECT pagos.fecha, pagos.monto, miembros.nombre, miembros.imagen, miembros.matricula, usuarios.usuario,
+    $sentencia = "SELECT pagos.fecha, pagos.monto, miembros.nombre, miembros.imagen, miembros.cedula, usuarios.usuario,
     IFNULL(membresias.nombre, 'VISITA REGULAR') AS membresia 
     FROM pagos
     LEFT JOIN membresias ON membresias.id = pagos.idMembresia
-    LEFT JOIN miembros ON miembros.matricula = pagos.matricula
+    LEFT JOIN miembros ON miembros.cedula = pagos.cedula
     LEFT JOIN usuarios ON usuarios.id = pagos.idUsuario
     WHERE DATE(pagos.fecha) >= ? AND DATE(pagos.fecha) <= ? ";
     $parametros = [$fechaInicio, $fechaFin];
@@ -57,13 +56,75 @@ function obtenerTotalesPorMiembro($filtros){
     $fechaInicio = (isset($filtros->fechaInicio)) ? $filtros->fechaInicio : FECHA_HOY;
     $fechaFin = (isset($filtros->fechaFin)) ? $filtros->fechaFin : FECHA_HOY;
 
-    $sentencia  = "SELECT SUM(pagos.monto) AS total, miembros.nombre, miembros.matricula, miembros.imagen FROM pagos
-    INNER JOIN miembros ON miembros.matricula = pagos.matricula
+    $sentencia  = "SELECT SUM(pagos.monto) AS total, miembros.nombre, miembros.cedula, miembros.imagen FROM pagos
+    INNER JOIN miembros ON miembros.cedula = pagos.cedula
     WHERE DATE(pagos.fecha) >= ? AND DATE(pagos.fecha) <= ? 
-    GROUP BY pagos.matricula
+    GROUP BY pagos.cedula
     ORDER BY total DESC
     LIMIT 5";
     $parametros = [$fechaInicio, $fechaFin];
     return selectPrepare($sentencia, $parametros);
 }
 
+function actualizarFechasMembresiaYGuardarRenovacion($cedula, $duracionDias) {
+    global $conexion;
+
+    $stmt = $conexion->prepare("SELECT fechaInicio, fechaFin FROM miembros WHERE cedula = ?");
+    $stmt->bind_param("s", $cedula);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+
+    if ($fila = $resultado->fetch_assoc()) {
+        $fechaFinActual = substr($fila['fechaFin'], 0, 10); // solo fecha sin hora
+        $fechaHoy = date('Y-m-d');
+        $fechaRenovacion = date('Y-m-d H:i:s');
+
+        if ($fechaFinActual >= $fechaHoy) {
+            // Sumar a la fecha de vencimiento actual
+            $nuevaFechaInicio = $fila['fechaInicio'];
+            $nuevaFechaFin = date('Y-m-d H:i:s', strtotime($fechaFinActual . " +$duracionDias days"));
+        } else {
+            // Reiniciar desde hoy
+            $nuevaFechaInicio = $fechaRenovacion;
+            $nuevaFechaFin = date('Y-m-d H:i:s', strtotime("+$duracionDias days"));
+        }
+
+        // Actualizar en miembros
+        $update = $conexion->prepare("UPDATE miembros SET fechaInicio = ?, fechaFin = ?, estado = 'ACTIVO' WHERE cedula = ?");
+        $update->bind_param("sss", $nuevaFechaInicio, $nuevaFechaFin, $cedula);
+        $update->execute();
+
+        // Insertar en renovaciones
+        $stmtRenovacion = $conexion->prepare("INSERT INTO renovaciones (cedula, fechaRenovacion, fechaInicioNueva, fechaFinNueva) VALUES (?, ?, ?, ?)");
+        $stmtRenovacion->bind_param("ssss", $cedula, $fechaRenovacion, $nuevaFechaInicio, $nuevaFechaFin);
+        $stmtRenovacion->execute();
+
+        return [
+            "exito" => true,
+            "fechaAnterior" => $fechaFinActual,
+            "duracion" => $duracionDias,
+            "nuevaFechaFin" => $nuevaFechaFin
+        ];
+    }
+
+    return [ "exito" => false, "mensaje" => "Miembro no encontrado" ];
+}
+
+function registrarPago($pago) {
+    global $conexion;
+
+    $cedula = $pago->cedula;
+    $monto = $pago->pago;
+    $idMembresia = $pago->idMembresia;
+    $fechaPago = date('Y-m-d H:i:s');
+    $duracion = isset($pago->duracion) ? intval($pago->duracion) : 30;
+    $idUsuario = isset($pago->idUsuario) ? intval($pago->idUsuario) : null;
+
+    // Registrar en pagos
+    $stmtPago = $conexion->prepare("INSERT INTO pagos (cedula, monto, idMembresia, fecha, idUsuario) VALUES (?, ?, ?, ?, ?)");
+    $stmtPago->bind_param("sdssi", $cedula, $monto, $idMembresia, $fechaPago, $idUsuario);
+    $stmtPago->execute();
+
+    // Actualizar fechas de membresía y registrar renovación
+    return actualizarFechasMembresiaYGuardarRenovacion($cedula, $duracion);
+}

@@ -5,12 +5,18 @@ import vuetify from './Vuetify'
 import 'vuetify/dist/vuetify.min.css'
 import '@mdi/font/css/materialdesignicons.css'
 
-Vue.config.productionTip = false
+// 👇 IMPORTA Toast
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
 
+// 👇 USA Toast
+Vue.use(Toast);
+
+Vue.config.productionTip = false;
+
+// 👇 USA render moderno para que plugins como Toast funcionen
 new Vue({
-  el: '#app',
   router,
   vuetify,
-  components: { App },
-  template: '<App/>'
-})
+  render: h => h(App)
+}).$mount('#app')

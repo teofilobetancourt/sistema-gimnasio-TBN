@@ -15,6 +15,14 @@
               v-model="datosPersonales.nombre"
             >
             </v-text-field>
+         <v-text-field
+                label="Cédula"
+                :rules="reglasForm"
+                v-model="datosPersonales.cedula"
+                required
+                hide-details="auto"
+              />
+
             <v-text-field
               label="Teléfono"
               :rules="reglasForm"
@@ -140,12 +148,14 @@ export default {
     e6: 1,
     imagen: null,
     imagenUrl: null,
-    datosPersonales:{
-       nombre: "",
-        telefono: "",
-        direccion: "",
-        edad: 10,
-    },
+    datosPersonales: {
+    cedula: "",  // ✅ nuevo campo
+    nombre: "",
+    telefono: "",
+    direccion: "",
+    edad: 10,
+  },
+
     datosContacto: {
       sufreEnfermedad: false,
         tieneSeguro: false,

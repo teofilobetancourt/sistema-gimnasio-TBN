@@ -116,10 +116,10 @@ export default {
         })
         .catch(error => {
           this.cargando = false;
-          console.error("\u274C Error al registrar pago:", error);
+          console.error("❌ Error al registrar pago:", error);
         });
 
-      console.log("\uD83C\uDF1F Payload enviado:", payload);
+      console.log("🌟 Payload enviado:", payload);
     },
 
     formatearBsS(valor) {

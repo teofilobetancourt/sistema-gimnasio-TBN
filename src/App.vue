@@ -1,8 +1,13 @@
 <template>
   <div id="app">
     <v-app>
-      <login @logeado="onLog" v-if="!logeado" />
+      <!-- Mostrar login si no ha iniciado sesión -->
+      <login @logeado="onLog" v-if="!logeado && !debeCambiarPassword" />
+
+      <!-- Mostrar cambio de contraseña si es necesario -->
       <cambiar-password v-if="debeCambiarPassword" />
+
+      <!-- Mostrar la app solo si está logeado y no debe cambiar contraseña -->
       <div v-if="logeado && !debeCambiarPassword">
         <encabezado />
         <v-main>
@@ -12,6 +17,7 @@
         </v-main>
       </div>
 
+      <!-- Mensajes tipo snackbar -->
       <v-snackbar
         v-model="mostrarMensaje"
         :timeout="3000"
@@ -50,10 +56,7 @@ export default {
 
   mounted() {
     this.obtenerInformacionNegocio()
-    let logeado = this.verificarSesion()
-    if (logeado) {
-      this.logeado = true
-    }
+    this.logeado = this.verificarSesion()
   },
 
   methods: {
@@ -67,6 +70,8 @@ export default {
         return
       }
 
+      const datos = respuesta.datos
+
       if (respuesta.resultado === 'cambia') {
         this.mostrarMensaje = true
         this.mensaje = {
@@ -75,20 +80,14 @@ export default {
         }
         this.debeCambiarPassword = true
         this.logeado = true
-        this.establecerUsuario(
-          respuesta.datos.nombreUsuario,
-          respuesta.datos.idUsuario
-        )
+        this.establecerUsuario(datos.nombreUsuario, datos.idUsuario, datos.rol)
         return
       }
 
       if (respuesta.resultado) {
         this.logeado = true
-        localStorage.setItem('logeado', true)
-        this.establecerUsuario(
-          respuesta.datos.nombreUsuario,
-          respuesta.datos.idUsuario
-        )
+        localStorage.setItem('logeado', 'true')
+        this.establecerUsuario(datos.nombreUsuario, datos.idUsuario, datos.rol)
         this.mostrarMensaje = true
         this.mensaje = {
           texto: 'Datos correctos. Bienvenido',
@@ -99,12 +98,13 @@ export default {
     },
 
     verificarSesion() {
-      return localStorage.getItem('logeado') || false
+      return localStorage.getItem('logeado') === 'true'
     },
 
-    establecerUsuario(usuario, id) {
+    establecerUsuario(usuario, id, rol) {
       localStorage.setItem('nombreUsuario', usuario)
       localStorage.setItem('idUsuario', id)
+      localStorage.setItem('rolUsuario', rol)
     },
 
     obtenerInformacionNegocio() {

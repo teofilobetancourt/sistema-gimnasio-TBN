@@ -127,37 +127,3 @@ function obtenerImagenPorCedula($cedula) {
     $sentencia = "SELECT imagen FROM miembros WHERE cedula = ?";
     return selectPrepare($sentencia, [$cedula])[0];
 }
-
-function renovarMembresia($cedula) {
-    include "base_datos.php";
-    $hoy = date("Y-m-d");
-
-    // Buscar la fechaFin actual
-    $sentencia = $base_de_datos->prepare("SELECT fechaFin FROM miembros WHERE cedula = ?");
-    $sentencia->execute([$cedula]);
-    $fechaFinActual = $sentencia->fetchColumn();
-
-    if (!$fechaFinActual) {
-        return ["error" => "No se encontró la fechaFin del miembro"];
-    }
-
-    // Si la membresía sigue activa, sumamos un mes a fechaFin. Si no, reiniciamos desde hoy.
-    if ($fechaFinActual >= $hoy) {
-        $nuevaFechaFin = date("Y-m-d", strtotime($fechaFinActual . " +1 month"));
-    } else {
-        $nuevaFechaFin = date("Y-m-d", strtotime($hoy . " +1 month"));
-        // También actualizamos fechaInicio si ya estaba vencida
-        $sentenciaInicio = $base_de_datos->prepare("UPDATE miembros SET fechaInicio = ? WHERE cedula = ?");
-        $sentenciaInicio->execute([$hoy, $cedula]);
-    }
-
-    // Actualizamos la fechaFin y estado
-    $sentenciaUpdate = $base_de_datos->prepare("UPDATE miembros SET fechaFin = ?, estado = 'ACTIVO' WHERE cedula = ?");
-    $resultado = $sentenciaUpdate->execute([$nuevaFechaFin, $cedula]);
-
-    return [
-        "resultado" => $resultado,
-        "fechaFinNueva" => $nuevaFechaFin
-    ];
-}
-

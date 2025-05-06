@@ -1,35 +1,17 @@
 <template>
   <v-container fluid class="pa-0">
     <div class="encabezado-banner d-flex flex-column justify-center align-center text-center">
-      <!-- BOTÓN MENÚ solo visible si drawer está cerrado -->
       <transition name="fade-scale">
-        <v-btn
-          v-if="!drawer"
-          icon
-          @click="drawer = true"
-          title="Abrir menú"
-          class="btn-menu-fijo"
-        >
+        <v-btn v-if="!drawer" icon @click="drawer = true" title="Abrir menú" class="btn-menu-fijo">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
       </transition>
 
-      <!-- BARRA SUPERIOR: Botones lado derecho -->
       <div class="barra-funcional d-flex justify-end align-center px-4 pt-2">
-        <!-- Botón tema con tooltip -->
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              icon
-              class="btn-circular mr-2"
-              v-bind="attrs"
-              v-on="on"
-              @click="toggleDarkMode"
-            >
-              <v-icon
-                :color="$vuetify.theme.dark ? 'yellow lighten-2' : 'black'"
-                class="rotate-on-toggle"
-              >
+            <v-btn icon class="btn-circular mr-2" v-bind="attrs" v-on="on" @click="toggleDarkMode">
+              <v-icon :color="$vuetify.theme.dark ? 'yellow lighten-2' : 'black'" class="rotate-on-toggle">
                 {{ $vuetify.theme.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}
               </v-icon>
             </v-btn>
@@ -37,16 +19,9 @@
           <span>{{ $vuetify.theme.dark ? 'Tema claro' : 'Tema oscuro' }}</span>
         </v-tooltip>
 
-        <!-- Botón salir con tooltip -->
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              icon
-              class="btn-circular"
-              v-bind="attrs"
-              v-on="on"
-              @click="salir"
-            >
+            <v-btn icon class="btn-circular" v-bind="attrs" v-on="on" @click="salir">
               <v-icon>mdi-logout</v-icon>
             </v-btn>
           </template>
@@ -54,18 +29,12 @@
         </v-tooltip>
       </div>
 
-      <!-- TÍTULO Y SUBTÍTULO -->
       <h1 class="titulo font-weight-bold">EVOLUTION FITNESS · GYM, F. P.</h1>
       <p class="subtitulo">Bienvenido al sistema de control de mensualidades Evolution Fitness Gym</p>
     </div>
 
-    <!-- DRAWER lateral -->
-    <v-navigation-drawer
-      app
-      v-model="drawer"
-      class="drawer-degradado shadow-right"
-      dark
-    >
+    <!-- Menú lateral -->
+    <v-navigation-drawer app v-model="drawer" class="drawer-degradado shadow-right" dark>
       <v-list-item>
         <v-list-item-content>
           <v-list-item-title class="text-h6 white--text">
@@ -84,7 +53,7 @@
 
       <v-list dense nav>
         <v-list-item
-          v-for="item in items"
+          v-for="item in itemsFiltrados"
           :key="item.title"
           link
           :to="item.link"
@@ -113,6 +82,7 @@ export default {
     nombreUsuario: "",
     nombreGimnasio: "",
     logo: logoLocal,
+    rol: localStorage.getItem("rolUsuario") || "",
     items: [
       { title: "Inicio", icon: "mdi-view-dashboard", link: "/" },
       { title: "Usuarios", icon: "mdi-account-box", link: "/usuarios" },
@@ -124,10 +94,18 @@ export default {
     ],
   }),
 
+  computed: {
+    itemsFiltrados() {
+      if (this.rol === "admin") return this.items;
+      return this.items.filter(item =>
+        item.title === "Inicio" || item.title === "Mensualidades"
+      );
+    }
+  },
+
   mounted() {
     this.nombreUsuario = localStorage.getItem("nombreUsuario");
     this.nombreGimnasio = localStorage.getItem("nombreGimnasio");
-
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
       this.$vuetify.theme.dark = savedTheme === 'true';
@@ -136,9 +114,7 @@ export default {
 
   methods: {
     salir() {
-      localStorage.removeItem('logeado');
-      localStorage.removeItem('nombreUsuario');
-      localStorage.removeItem('idUsuario');
+      localStorage.clear();
       window.location.reload();
     },
     toggleDarkMode() {
@@ -160,7 +136,7 @@ export default {
 }
 
 .drawer-degradado {
-  background: #9c27b0; /* morado sólido para evitar el choque */
+  background: #9c27b0;
 }
 
 .shadow-right {

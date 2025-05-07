@@ -54,7 +54,7 @@
     <!-- Cartas de visitas (mensualidades) -->
     <v-row dense no-gutters class="ma-0 pa-4">
       <transition-group name="fade" tag="div" class="d-flex flex-wrap" style="width: 100%;">
-        <v-col cols="12" md="3" class="pa-2" v-for="(card, index) in datosVisitas" :key="'visita-' + index">
+        <v-col cols="12" md="3" class="pa-2" v-for="(card, index) in datosVisitas" :key="'visita-' + index" v-if="rolUsuario === 'admin'">
           <div class="glass-card-custom">
             <v-icon size="40" :color="card.color" class="mb-2">{{ card.icono }}</v-icon>
             <div class="label">
@@ -105,6 +105,7 @@
     </v-row>
 
     <!-- Cartas de pagos -->
+    <template v-if="rolUsuario === 'admin'">
     <v-row dense no-gutters class="ma-0 pa-4">
       <transition-group name="fade" tag="div" class="d-flex flex-wrap" style="width: 100%;">
         <v-col cols="12" md="3" class="pa-2" v-for="(card, index) in datosPagos" :key="'pago-' + index">
@@ -117,7 +118,10 @@
       </transition-group>
     </v-row>
 
+    </template>
+
     <!-- Gráficas de pagos -->
+    <template v-if="rolUsuario === 'admin'">
     <v-row dense no-gutters class="ma-0 pa-2">
       <v-col cols="12" md="4" class="pa-2" v-for="(grafica, i) in graficasPagos" :key="'graf-pago-' + i">
         <v-card class="pa-3 mb-2 fill-height glass-section" elevation="2">
@@ -131,6 +135,8 @@
         </v-card>
       </v-col>
     </v-row>
+
+    </template>
 
     <!-- Modal de detalles -->
     <v-dialog v-model="dialogoDetalle" max-width="400">
@@ -164,6 +170,9 @@ export default {
   name: "InicioComponent",
   components: { SparklineComponent },
   data: () => ({
+
+    rolUsuario: localStorage.getItem('rolUsuario'),
+
     cargando: false,
     tasaDolar: 0,
     tasaManual: "",

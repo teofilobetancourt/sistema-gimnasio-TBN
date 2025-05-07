@@ -1,3 +1,4 @@
+
 <template>
   <div id="app">
     <v-app>
@@ -60,41 +61,38 @@ export default {
   },
 
   methods: {
-    onLog(respuesta) {
-      if (!respuesta.resultado) {
-        this.mostrarMensaje = true
+    onLog(datos) {
+      console.log("Datos recibidos:", datos);
+
+      if (!datos || !datos.idUsuario || !datos.rol) {
+        this.mostrarMensaje = true;
         this.mensaje = {
           texto: 'Datos incorrectos, verifica la información',
           color: 'error',
-        }
-        return
+        };
+        return;
       }
 
-      const datos = respuesta.datos
-
-      if (respuesta.resultado === 'cambia') {
-        this.mostrarMensaje = true
+      if (datos.requiereCambioPassword) {
+        this.mostrarMensaje = true;
         this.mensaje = {
           texto: 'Datos correctos. Por favor cambia tu contraseña',
           color: 'indigo',
-        }
-        this.debeCambiarPassword = true
-        this.logeado = true
-        this.establecerUsuario(datos.nombreUsuario, datos.idUsuario, datos.rol)
-        return
-      }
-
-      if (respuesta.resultado) {
-        this.logeado = true
-        localStorage.setItem('logeado', 'true')
-        this.establecerUsuario(datos.nombreUsuario, datos.idUsuario, datos.rol)
-        this.mostrarMensaje = true
+        };
+        this.debeCambiarPassword = true;
+        this.logeado = true;
+      } else {
+        this.logeado = true;
+        localStorage.setItem('logeado', 'true');
+        this.mostrarMensaje = true;
         this.mensaje = {
           texto: 'Datos correctos. Bienvenido',
           color: 'success',
-        }
-        this.$router.push({ name: 'InicioComponent' })
+        };
+        this.$router.push({ name: 'InicioComponent' }).catch(() => {});
       }
+
+      this.establecerUsuario(datos.nombreUsuario, datos.idUsuario, datos.rol);
     },
 
     verificarSesion() {

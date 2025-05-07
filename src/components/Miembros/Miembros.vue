@@ -197,7 +197,12 @@ export default {
     miembrosFiltrados() {
       const texto = this.busqueda.toLowerCase();
       return this.miembros
-        .filter(m => m.nombre.toLowerCase().includes(texto) || m.cedula.toLowerCase().includes(texto))
+        .map(m => ({
+          ...m,
+          fechaInicio: m.fechaInicio ? m.fechaInicio.split(' ')[0] : '',
+          fechaFin: m.fechaFin ? m.fechaFin.split(' ')[0] : ''
+        }))
+        .filter(m => m.nombre.toLowerCase().includes(texto) || String(m.cedula).toLowerCase().includes(texto))
         .sort((a, b) => {
           if ((a.estado === 'VENCIDO') !== (b.estado === 'VENCIDO')) return a.estado === 'VENCIDO' ? -1 : 1;
           return new Date(b.fechaRegistro) - new Date(a.fechaRegistro);

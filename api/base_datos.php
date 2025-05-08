@@ -65,3 +65,24 @@ function conectarBaseDatos() {
 	     throw new \PDOException($e->getMessage(), (int)$e->getCode());
 	}
 }
+
+function actualizar($sentencia, $parametros) {
+    $conexion = obtenerConexion();
+    $consulta = $conexion->prepare($sentencia);
+    return $consulta->execute($parametros);
+}
+
+function obtenerConexion() {
+    $servidor = "localhost";
+    $usuario = "root";
+    $contrasena = "";
+    $baseDeDatos = "sistema_gimnasio";
+
+    try {
+        $conexion = new PDO("mysql:host=$servidor;dbname=$baseDeDatos;charset=utf8", $usuario, $contrasena);
+        $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $conexion;
+    } catch (PDOException $e) {
+        die("❌ Error de conexión: " . $e->getMessage());
+    }
+}

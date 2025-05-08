@@ -50,14 +50,19 @@ export default {
   name: "RealizarPago",
   props: ["cedula"],
 
-  data: () => ({
-    membresiaSeleccionada: null,
-    fechaSeleccionada: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
-    membresias: [],
-    cargando: false,
-    tasaDolar: 0,
-    mostrarSnackbar: false,
-  }),
+  data() {
+    const today = new Date();
+    const offsetDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+
+    return {
+      membresiaSeleccionada: null,
+      fechaSeleccionada: offsetDate,
+      membresias: [],
+      cargando: false,
+      tasaDolar: 0,
+      mostrarSnackbar: false,
+    };
+  },
 
   mounted() {
     this.obtenerTasa();

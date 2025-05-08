@@ -1,4 +1,3 @@
-
 <template>
   <div id="app">
     <v-app>
@@ -118,3 +117,10 @@ export default {
   },
 }
 </script>
+
+<style>
+.gradient-drawer {
+  background: linear-gradient(to bottom, #8e24aa, #5e35b1);
+  color: white;
+}
+</style>

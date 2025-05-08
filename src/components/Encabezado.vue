@@ -136,7 +136,8 @@ export default {
 }
 
 .drawer-degradado {
-  background: #9c27b0;
+  background: linear-gradient(to bottom, #8e24aa, #5e35b1);
+  color: white;
 }
 
 .shadow-right {

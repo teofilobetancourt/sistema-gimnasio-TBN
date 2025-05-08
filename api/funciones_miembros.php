@@ -60,16 +60,18 @@ function registrarPago($pago) {
     $pagoRegistrado = insertar($sentencia, $parametros);
 
     if ($pagoRegistrado) {
-        return actualizarMembresia($pago->cedula, $pago->idMembresia, $pago->duracion);
+        return actualizarMembresia($pago->cedula, $pago->idMembresia, $pago->duracion, $pago->fecha);
     } else {
         return ["error" => "No se pudo registrar el pago."];
     }
 }
 
-function actualizarMembresia($cedula, $idMembresia, $duracion) {
-    $sentencia = "UPDATE miembros SET idMembresia = ?, estado = ?, fechaInicio = ?, fechaFin = DATE_ADD(fechaInicio, INTERVAL ? DAY) WHERE cedula = ?";
-    $parametros = [$idMembresia, 'ACTIVO', date("Y-m-d H:i:s"), $duracion, $cedula];
-    return editar($sentencia, $parametros);
+function actualizarMembresia($cedula, $idMembresia, $duracion, $fechaInicio) {
+    $fechaFin = date("Y-m-d", strtotime("$fechaInicio +$duracion days"));
+    $estado = "ACTIVO";
+    $sentencia = "UPDATE miembros SET idMembresia = ?, estado = ?, fechaInicio = ?, fechaFin = ? WHERE cedula = ?";
+    $parametros = [$idMembresia, $estado, $fechaInicio, $fechaFin, $cedula];
+    return actualizar($sentencia, $parametros);
 }
 
 function verificarMembresia($miembros) {

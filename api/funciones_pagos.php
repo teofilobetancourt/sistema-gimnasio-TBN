@@ -75,26 +75,27 @@ function actualizarFechasMembresiaYGuardarRenovacion($cedula, $duracionDias) {
     $resultado = $stmt->get_result();
 
     if ($fila = $resultado->fetch_assoc()) {
-        $fechaFinActual = substr($fila['fechaFin'], 0, 10); // solo fecha sin hora
-        $fechaHoy = date('Y-m-d');
+        $fechaFinActual = $fila['fechaFin']; // incluye hora
+        $fechaHoy = date('Y-m-d H:i:s');
         $fechaRenovacion = date('Y-m-d H:i:s');
 
-        if ($fechaFinActual >= $fechaHoy) {
-            // Sumar a la fecha de vencimiento actual
-            $nuevaFechaInicio = $fila['fechaInicio'];
+        // Comparar como timestamps
+        if (strtotime($fechaFinActual) >= strtotime($fechaHoy)) {
+            // SUMA sobre la fechaFin actual
+            $nuevaFechaInicio = $fechaFinActual;
             $nuevaFechaFin = date('Y-m-d H:i:s', strtotime($fechaFinActual . " +$duracionDias days"));
         } else {
-            // Reiniciar desde hoy
+            // REINICIA desde hoy
             $nuevaFechaInicio = $fechaRenovacion;
             $nuevaFechaFin = date('Y-m-d H:i:s', strtotime("+$duracionDias days"));
         }
 
-        // Actualizar en miembros
+        // ✅ Actualiza en la tabla miembros
         $update = $conexion->prepare("UPDATE miembros SET fechaInicio = ?, fechaFin = ?, estado = 'ACTIVO' WHERE cedula = ?");
         $update->bind_param("sss", $nuevaFechaInicio, $nuevaFechaFin, $cedula);
         $update->execute();
 
-        // Insertar en renovaciones
+        // ✅ Registra renovación
         $stmtRenovacion = $conexion->prepare("INSERT INTO renovaciones (cedula, fechaRenovacion, fechaInicioNueva, fechaFinNueva) VALUES (?, ?, ?, ?)");
         $stmtRenovacion->bind_param("ssss", $cedula, $fechaRenovacion, $nuevaFechaInicio, $nuevaFechaFin);
         $stmtRenovacion->execute();
@@ -109,6 +110,7 @@ function actualizarFechasMembresiaYGuardarRenovacion($cedula, $duracionDias) {
 
     return [ "exito" => false, "mensaje" => "Miembro no encontrado" ];
 }
+
 
 function registrarPago($pago) {
     global $conexion;

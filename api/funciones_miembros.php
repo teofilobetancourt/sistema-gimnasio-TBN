@@ -1,8 +1,10 @@
 <?php
 include_once "base_datos.php";
 
+date_default_timezone_set("America/Caracas"); // Zona horaria correcta
+
 function registrarMiembro($miembro) {
-    $cedula = $miembro->cedula; // ✅ ahora usamos la cédula ingresada
+    $cedula = $miembro->cedula;
     $imagen = ($miembro->imagen) ? obtenerImagen($miembro->imagen) : './imagenes/usuario.png';
 
     $sentencia = "INSERT INTO miembros (cedula, nombre, telefono, direccion, edad,
@@ -27,7 +29,7 @@ function registrarMiembro($miembro) {
     ];
 
     $resultado = insertar($sentencia, $parametros);
-    if ($resultado) return $cedula; // ✅ devolvemos la cédula registrada
+    if ($resultado) return $cedula;
 }
 
 function obtenerMiembros() {
@@ -48,14 +50,15 @@ function obtenerMiembroNombreCedula($busqueda) {
 }
 
 function registrarPago($pago) {
-    if (!isset($pago->cedula) || !isset($pago->idMembresia) || !isset($pago->idUsuario) || !isset($pago->fecha) || !isset($pago->pago)) {
+    if (!isset($pago->cedula) || !isset($pago->idMembresia) || !isset($pago->idUsuario) || !isset($pago->pago)) {
         return ["error" => "Datos incompletos para registrar el pago."];
     }
 
     $monto = floatval(str_replace(',', '.', $pago->pago));
+    $fechaActual = date("Y-m-d H:i:s");
 
     $sentencia = "INSERT INTO pagos (cedula, idMembresia, idUsuario, fecha, monto) VALUES (?,?,?,?,?)";
-    $parametros = [$pago->cedula, $pago->idMembresia, $pago->idUsuario, $pago->fecha, $monto];
+    $parametros = [$pago->cedula, $pago->idMembresia, $pago->idUsuario, $fechaActual, $monto];
 
     $pagoRegistrado = insertar($sentencia, $parametros);
 
@@ -66,11 +69,23 @@ function registrarPago($pago) {
     }
 }
 
-function actualizarMembresia($cedula, $idMembresia, $duracion, $fechaInicio) {
-    $fechaFin = date("Y-m-d", strtotime("$fechaInicio +$duracion days"));
+function actualizarMembresia($cedula, $idMembresia, $duracion, $fechaInicio = null) {
+    // Si no viene fecha, usamos la actual del servidor
+    if (empty($fechaInicio)) {
+        $fechaInicioCompleta = date("Y-m-d H:i:s");
+    } else {
+        // Si viene solo la fecha sin hora, agregamos la hora actual
+        $fechaInicioCompleta = (strlen($fechaInicio) <= 10)
+            ? date("Y-m-d H:i:s", strtotime($fechaInicio . ' ' . date("H:i:s")))
+            : date("Y-m-d H:i:s", strtotime($fechaInicio));
+    }
+
+    $fechaFin = date("Y-m-d H:i:s", strtotime("$fechaInicioCompleta +$duracion days"));
     $estado = "ACTIVO";
+
     $sentencia = "UPDATE miembros SET idMembresia = ?, estado = ?, fechaInicio = ?, fechaFin = ? WHERE cedula = ?";
-    $parametros = [$idMembresia, $estado, $fechaInicio, $fechaFin, $cedula];
+    $parametros = [$idMembresia, $estado, $fechaInicioCompleta, $fechaFin, $cedula];
+
     return actualizar($sentencia, $parametros);
 }
 

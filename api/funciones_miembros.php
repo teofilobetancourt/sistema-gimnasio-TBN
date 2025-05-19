@@ -70,24 +70,35 @@ function registrarPago($pago) {
 }
 
 function actualizarMembresia($cedula, $idMembresia, $duracion, $fechaInicio = null) {
-    // Si no viene fecha, usamos la actual del servidor
-    if (empty($fechaInicio)) {
-        $fechaInicioCompleta = date("Y-m-d H:i:s");
+    $query = "SELECT estado, fechaFin FROM miembros WHERE cedula = ?";
+    $datos = selectPrepare($query, [$cedula])[0];
+
+    $estado = $datos->estado;
+    $fechaFinActual = $datos->fechaFin;
+
+    if ($estado === 'ACTIVO' && !empty($fechaFinActual)) {
+        // Sumar duración a fechaFin actual
+        $nuevaFechaFin = date("Y-m-d H:i:s", strtotime("$fechaFinActual +$duracion days"));
+        $sentencia = "UPDATE miembros SET idMembresia = ?, fechaFin = ? WHERE cedula = ?";
+        $parametros = [$idMembresia, $nuevaFechaFin, $cedula];
     } else {
-        // Si viene solo la fecha sin hora, agregamos la hora actual
-        $fechaInicioCompleta = (strlen($fechaInicio) <= 10)
-            ? date("Y-m-d H:i:s", strtotime($fechaInicio . ' ' . date("H:i:s")))
-            : date("Y-m-d H:i:s", strtotime($fechaInicio));
+        // VENCIDO o sin fechaFin, usar fecha de inicio nueva
+        if (empty($fechaInicio)) {
+            $fechaInicioCompleta = date("Y-m-d H:i:s");
+        } else {
+            $fechaInicioCompleta = (strlen($fechaInicio) <= 10)
+                ? date("Y-m-d H:i:s", strtotime($fechaInicio . ' ' . date("H:i:s")))
+                : date("Y-m-d H:i:s", strtotime($fechaInicio));
+        }
+
+        $nuevaFechaFin = date("Y-m-d H:i:s", strtotime("$fechaInicioCompleta +$duracion days"));
+        $sentencia = "UPDATE miembros SET idMembresia = ?, estado = ?, fechaInicio = ?, fechaFin = ? WHERE cedula = ?";
+        $parametros = [$idMembresia, 'ACTIVO', $fechaInicioCompleta, $nuevaFechaFin, $cedula];
     }
-
-    $fechaFin = date("Y-m-d H:i:s", strtotime("$fechaInicioCompleta +$duracion days"));
-    $estado = "ACTIVO";
-
-    $sentencia = "UPDATE miembros SET idMembresia = ?, estado = ?, fechaInicio = ?, fechaFin = ? WHERE cedula = ?";
-    $parametros = [$idMembresia, $estado, $fechaInicioCompleta, $fechaFin, $cedula];
 
     return actualizar($sentencia, $parametros);
 }
+
 
 function verificarMembresia($miembros) {
     foreach ($miembros as $miembro) {

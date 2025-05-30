@@ -145,7 +145,7 @@
         <v-card-title class="text-h6 justify-center">Detalles del miembro</v-card-title>
         <v-card-text v-if="detalleMiembro">
           <v-row justify="center" class="mb-4">
-            <v-avatar size="120">
+            <v-avatar size="180">
               <v-img
                 :src="detalleMiembro.imagen ? 'http://localhost/sistema-gimnasio/api' + detalleMiembro.imagen.replace('.', '') : 'https://via.placeholder.com/200'"
                 contain
@@ -155,7 +155,7 @@
           <v-list dense>
             <v-list-item>
               <v-list-item-title class="text-subtitle-1 text-center font-weight-bold">
-                {{ calcularDiasRestantes(detalleMiembro.fechaFin) }} días restantes de membresía
+                {{ calcularDiasRestantes(detalleMiembro.fechaFin) }} días restantes de mensualidad
               </v-list-item-title>
             </v-list-item>
             <v-list-item><v-list-item-title><strong>Nombre:</strong> {{ detalleMiembro.nombre }}</v-list-item-title></v-list-item>
@@ -297,24 +297,26 @@ export default {
       });
     },
     obtenerTasaBCV() {
-      axios.get('http://localhost/sistema-gimnasio/api/tasa_bcv.php')
-        .then(response => {
-          if (response.data && response.data.bcv) {
-            this.tasaDolar = parseFloat(response.data.bcv);
-            localStorage.setItem('tasaBCV', this.tasaDolar);
-            this.$toast.success("✅ Tasa BCV actualizada exitosamente", {
-              timeout: 2500,
-              position: "top-right"
-            });
-          } else {
-            this.mostrarDialogoTasaManual();
-          }
-        })
-        .catch(error => {
-          console.error('Error obteniendo tasa BCV:', error);
-          this.mostrarDialogoTasaManual();
+  axios.get('http://localhost/sistema-gimnasio/api/tasa_bcv.php')
+    .then(response => {
+      if (response.data && response.data.bcv) {
+        this.tasaDolar = parseFloat(response.data.bcv);
+        localStorage.setItem('tasaBCV', this.tasaDolar);
+        localStorage.setItem('tasaBCV_actualizada', Date.now()); // ✅ esto evita consultas innecesarias
+        this.$toast.success("✅ Tasa BCV actualizada exitosamente", {
+          timeout: 2500,
+          position: "top-right"
         });
-    },
+      } else {
+        this.mostrarDialogoTasaManual();
+      }
+    })
+    .catch(error => {
+      console.error('Error obteniendo tasa BCV:', error);
+      this.mostrarDialogoTasaManual();
+    });
+}
+,
 
     intentarActualizarTasa() {
   console.log("🌐 Internet restaurado, esperando para intentar verificar actualización de tasa...");

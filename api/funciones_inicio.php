@@ -103,22 +103,18 @@ function obtenerMembresiasActivas() {
 }
 
 function obtenerMiembrosVencidos() {
-    $sql = "SELECT nombre FROM miembros WHERE estado = 'VENCIDO' OR fechaFin < CURDATE()";
-    return selectQuery($sql);
+    $sentencia = "SELECT nombre, cedula FROM miembros WHERE estado = 'VENCIDO'";
+    return select($sentencia);
 }
 
 function obtenerMiembrosPorVencer() {
-    $sql = "SELECT nombre FROM miembros 
-            WHERE estado = 'ACTIVO' 
-              AND fechaFin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 5 DAY)";
-    return selectQuery($sql);
+    $sentencia = "SELECT nombre, cedula FROM miembros WHERE estado = 'ACTIVO' AND DATEDIFF(fechaFin, CURDATE()) <= 3 AND DATEDIFF(fechaFin, CURDATE()) >= 0";
+    return select($sentencia);
 }
 
 function obtenerMiembrosActivos() {
-    $sql = "SELECT nombre FROM miembros 
-            WHERE estado = 'ACTIVO' 
-              AND fechaFin > DATE_ADD(CURDATE(), INTERVAL 5 DAY)";
-    return selectQuery($sql);
+    $sentencia = "SELECT nombre, cedula FROM miembros WHERE estado = 'ACTIVO'";
+    return select($sentencia);
 }
 
 

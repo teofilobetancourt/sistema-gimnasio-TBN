@@ -92,11 +92,11 @@
           ></v-text-field>
           <div class="scroll-box no-scrollbar">
             <div
-              v-for="(nombre, j) in grafica.etiquetas.filter(n => !grafica.search || n.toLowerCase().includes(grafica.search.toLowerCase()))"
+              v-for="(miembro, j) in grafica.etiquetas.filter(m => !grafica.search || m.nombre.toLowerCase().includes(grafica.search.toLowerCase()))"
               :key="'miembro-' + i + '-' + j"
               class="nombre-item"
-              v-html="resaltarCoincidencia(nombre, grafica.search, j + 1)"
-              @click="mostrarDetalles(nombre)"
+              v-html="resaltarCoincidencia(miembro.nombre, grafica.search, j + 1)"
+              @click="consultarMiembro(miembro.nombre, miembro.cedula)"
               style="cursor: pointer;"
             ></div>
           </div>
@@ -138,18 +138,27 @@
 
     </template>
 
-    <!-- Modal de detalles -->
-    <v-dialog v-model="dialogoDetalle" max-width="400">
+    <!-- Modal de detalles REAL -->
+    <v-dialog v-model="mostrarModal" max-width="500">
       <v-card>
-        <v-card-title class="text-h6">Detalles de mensualidad</v-card-title>
-        <v-card-text>
-          Información de la mensualidad: <strong>{{ miembroSeleccionado }}</strong>
-          <br />
-          (Aquí podrías mostrar más detalles reales...)
+        <v-card-title class="text-h6">Detalles del miembro</v-card-title>
+        <v-card-text v-if="detalleMiembro">
+          <v-list dense>
+            <v-list-item><v-list-item-title><strong>Nombre:</strong> {{ detalleMiembro.nombre }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Cédula:</strong> {{ detalleMiembro.cedula }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Edad:</strong> {{ detalleMiembro.edad }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Teléfono:</strong> {{ detalleMiembro.telefono }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Dirección:</strong> {{ detalleMiembro.direccion }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Institución:</strong> {{ detalleMiembro.institucion }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Membresía:</strong> {{ detalleMiembro.membresia }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Estado:</strong> {{ detalleMiembro.estado }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Fecha Inicio:</strong> {{ detalleMiembro.fechaInicio }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Fecha Fin:</strong> {{ detalleMiembro.fechaFin }}</v-list-item-title></v-list-item>
+          </v-list>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="dialogoDetalle = false">Cerrar</v-btn>
+          <v-spacer />
+          <v-btn text color="primary" @click="mostrarModal = false">Cerrar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -183,6 +192,8 @@ export default {
     graficasPagos: [],
     dialogoDetalle: false,
     miembroSeleccionado: "",
+    mostrarModal: false,
+    detalleMiembro: null,
     intervaloTasa: null,
     frecuenciaActualizacion: 10800000, // cada 3 horas
   }),
@@ -235,6 +246,32 @@ export default {
   },
 
   methods: {
+
+    consultarMiembro(nombre, cedula) {
+      console.log("🧪 Consultando miembro:", nombre, cedula);
+      if (!nombre || !cedula) {
+        this.$toast.error("Datos incompletos");
+        return;
+      }
+      this.cargando = true;
+      axios.post("http://localhost/sistema-gimnasio/api/miembros.php", {
+        accion: "obtenerMiembro",
+        nombre,
+        cedula
+      }).then(res => {
+        this.cargando = false;
+        if (res.data && res.data.nombre) {
+          this.detalleMiembro = res.data;
+          this.mostrarModal = true;
+        } else {
+          this.$toast.error("Miembro no encontrado");
+        }
+      }).catch(err => {
+        this.cargando = false;
+        console.error(err);
+        this.$toast.error("Error consultando miembro");
+      });
+    },
     obtenerTasaBCV() {
       axios.get('http://localhost/sistema-gimnasio/api/tasa_bcv.php')
         .then(response => {
@@ -374,10 +411,10 @@ export default {
       return `<span>${index}. ${resaltado}</span>`;
     },
 
-    mostrarDetalles(nombre) {
-      this.miembroSeleccionado = nombre;
-      this.dialogoDetalle = true;
-    },
+    
+
+    
+
   obtenerDatos() {
     this.cargando = true;
     HttpService.obtenerConDatos({ metodo: "obtener" }, "inicio.php").then((resultado) => {
@@ -398,9 +435,9 @@ export default {
       this.animarTarjetasPagos();
 
       this.graficasVisitas = [
-        { etiquetas: (resultado.miembrosVencidos || []).map(m => m.nombre), color: "pink", titulo: "Membresías vencidas", subtitulo: "Miembros finalizadas", search: "" },
-        { etiquetas: (resultado.miembrosPorVencer || []).map(m => m.nombre), color: "red", titulo: "Membresías por vencer", subtitulo: "Miembros próximos a vencer", search: "" },
-        { etiquetas: (resultado.miembrosActivos || []).map(m => m.nombre), color: "indigo", titulo: "Membresías activas", subtitulo: "Miembros actualmente activos", search: "" },
+        { etiquetas: (resultado.miembrosVencidos || []).map(m => ({ nombre: m.nombre, cedula: m.cedula })), color: "pink", titulo: "Membresías vencidas", subtitulo: "Miembros finalizadas", search: "" },
+        { etiquetas: (resultado.miembrosPorVencer || []).map(m => ({ nombre: m.nombre, cedula: m.cedula })), color: "red", titulo: "Membresías por vencer", subtitulo: "Miembros próximos a vencer", search: "" },
+        { etiquetas: (resultado.miembrosActivos || []).map(m => ({ nombre: m.nombre, cedula: m.cedula })), color: "indigo", titulo: "Membresías activas", subtitulo: "Miembros actualmente activos", search: "" },
       ];
 
       this.graficasPagos = [

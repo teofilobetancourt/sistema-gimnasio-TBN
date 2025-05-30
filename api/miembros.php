@@ -1,8 +1,46 @@
 <?php
+// 🔐 CORS antes de cualquier salida
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// 🔁 Si es una petición de tipo OPTIONS (preflight), responder OK y salir
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+include_once "base_datos.php";
 include_once "encabezado.php";
 
 try {
     $payload = json_decode(file_get_contents("php://input"));
+
+    if (isset($payload->accion) && $payload->accion === "obtenerMiembro") {
+        $nombre = $payload->nombre ?? '';
+        $cedula = $payload->cedula ?? '';
+
+        if (!$nombre || !$cedula) {
+            throw new Exception("Nombre o cédula faltante.");
+        }
+
+        $conn = conectarBaseDatos(); // ✅ Usamos PDO
+
+        $query = "SELECT nombre, cedula, edad, telefono, direccion, institucion,
+                 idMembresia AS membresia, estado, fechaInicio, fechaFin
+          FROM miembros
+          WHERE nombre = ? AND cedula = ?
+          LIMIT 1";
+
+
+        $stmt = $conn->prepare($query);
+        $stmt->execute([$nombre, $cedula]);
+        $miembro = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode($miembro ?: []);
+        exit;
+    }
+
     if (!$payload) {
         throw new Exception("No se recibieron datos válidos.");
     }
@@ -13,6 +51,8 @@ try {
     if (!$metodo) {
         throw new Exception("No se especificó ningún método.");
     }
+
+    $conn = conectarBaseDatos(); // Conexión PDO usada en métodos siguientes
 
     switch ($metodo) {
         case "registrar":
@@ -43,48 +83,34 @@ try {
 
         case "renovar":
             $cedula = $payload->cedula;
-            $duracion = intval($payload->duracion); // duración en días
+            $duracion = intval($payload->duracion);
 
             $query = "SELECT fechaFin FROM miembros WHERE cedula = ?";
             $stmt = $conn->prepare($query);
-            $stmt->bind_param("s", $cedula);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $miembro = $result->fetch_assoc();
+            $stmt->execute([$cedula]);
+            $miembro = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($miembro) {
                 $fechaFin = $miembro['fechaFin'];
-                $fechaFinSoloFecha = substr($fechaFin, 0, 10); // cortar hora
-                $hoy = new DateTime(); // hoy completo con hora
+                $fechaFinSoloFecha = substr($fechaFin, 0, 10);
+                $hoy = new DateTime();
                 $fechaFinDate = DateTime::createFromFormat("Y-m-d", $fechaFinSoloFecha);
 
-                $log = "FECHA HOY: " . $hoy->format("Y-m-d") . "\n";
-                $log .= "FECHA FIN ACTUAL: " . $fechaFinSoloFecha . "\n";
-                $log .= "DURACIÓN RECIBIDA: $duracion días\n";
-
                 if ($fechaFinDate && $fechaFinDate >= new DateTime($hoy->format("Y-m-d"))) {
-                    // Si todavía está activo, se suma sobre la fecha de fin
                     $nuevaFechaFinObj = clone $fechaFinDate;
                     $nuevaFechaFinObj->modify("+$duracion days");
                     $nuevaFechaFin = $nuevaFechaFinObj->format("Y-m-d H:i:s");
                     $nuevaFechaInicio = $miembro['fechaFin'];
-                    $log .= "➡ SUMANDO SOBRE FECHA FIN ACTUAL => $nuevaFechaFin\n";
                 } else {
-                    // Si ya está vencido, reiniciar desde hoy
                     $nuevaFechaInicio = $hoy->format("Y-m-d H:i:s");
                     $nuevaFechaFinObj = clone $hoy;
                     $nuevaFechaFinObj->modify("+$duracion days");
                     $nuevaFechaFin = $nuevaFechaFinObj->format("Y-m-d H:i:s");
-                    $log .= "🔁 REINICIANDO DESDE HOY => $nuevaFechaFin\n";
                 }
 
-                // Actualizar BD
                 $queryUpdate = "UPDATE miembros SET fechaInicio = ?, fechaFin = ?, estado = 'ACTIVO' WHERE cedula = ?";
                 $stmtUpdate = $conn->prepare($queryUpdate);
-                $stmtUpdate->bind_param("sss", $nuevaFechaInicio, $nuevaFechaFin, $cedula);
-                $stmtUpdate->execute();
-
-                error_log($log); // mostrar en error.log
+                $stmtUpdate->execute([$nuevaFechaInicio, $nuevaFechaFin, $cedula]);
 
                 echo json_encode([
                     "exito" => true,
@@ -117,4 +143,3 @@ try {
     http_response_code(400);
     echo json_encode(["error" => $e->getMessage()]);
 }
-?>

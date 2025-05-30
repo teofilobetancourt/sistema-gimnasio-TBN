@@ -86,3 +86,9 @@ function obtenerConexion() {
         die("❌ Error de conexión: " . $e->getMessage());
     }
 }
+
+function select($query) {
+    $bd = conectarBaseDatos(); // usa tu misma función de conexión PDO
+    $resultado = $bd->query($query);
+    return $resultado->fetchAll(PDO::FETCH_ASSOC); // devuelve como array asociativo
+}

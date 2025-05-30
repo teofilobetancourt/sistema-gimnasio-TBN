@@ -138,18 +138,31 @@
 
     </template>
 
+    
     <!-- Modal de detalles REAL -->
     <v-dialog v-model="mostrarModal" max-width="500">
       <v-card>
-        <v-card-title class="text-h6">Detalles del miembro</v-card-title>
+        <v-card-title class="text-h6 justify-center">Detalles del miembro</v-card-title>
         <v-card-text v-if="detalleMiembro">
+          <v-row justify="center" class="mb-4">
+            <v-avatar size="120">
+              <v-img
+                :src="detalleMiembro.imagen ? 'http://localhost/sistema-gimnasio/api' + detalleMiembro.imagen.replace('.', '') : 'https://via.placeholder.com/200'"
+                contain
+              />
+            </v-avatar>
+          </v-row>
           <v-list dense>
+            <v-list-item>
+              <v-list-item-title class="text-subtitle-1 text-center font-weight-bold">
+                {{ calcularDiasRestantes(detalleMiembro.fechaFin) }} días restantes de membresía
+              </v-list-item-title>
+            </v-list-item>
             <v-list-item><v-list-item-title><strong>Nombre:</strong> {{ detalleMiembro.nombre }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Cédula:</strong> {{ detalleMiembro.cedula }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Edad:</strong> {{ detalleMiembro.edad }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Teléfono:</strong> {{ detalleMiembro.telefono }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Dirección:</strong> {{ detalleMiembro.direccion }}</v-list-item-title></v-list-item>
-            <v-list-item><v-list-item-title><strong>Institución:</strong> {{ detalleMiembro.institucion }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Membresía:</strong> {{ detalleMiembro.membresia }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Estado:</strong> {{ detalleMiembro.estado }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Fecha Inicio:</strong> {{ detalleMiembro.fechaInicio }}</v-list-item-title></v-list-item>
@@ -162,6 +175,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
 
     <v-overlay :value="cargando">
       <v-progress-circular indeterminate size="64"></v-progress-circular>
@@ -246,6 +260,16 @@ export default {
   },
 
   methods: {
+
+    calcularDiasRestantes(fechaFin) {
+      if (!fechaFin) return 'N/A';
+      const hoy = new Date();
+      const fin = new Date(fechaFin);
+      const diferencia = fin - hoy;
+      const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+      return dias > 0 ? dias : 0;
+    },
+
 
     consultarMiembro(nombre, cedula) {
       console.log("🧪 Consultando miembro:", nombre, cedula);

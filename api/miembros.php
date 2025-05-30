@@ -26,11 +26,12 @@ try {
 
         $conn = conectarBaseDatos(); // ✅ Usamos PDO
 
-        $query = "SELECT nombre, cedula, edad, telefono, direccion, institucion,
-                 idMembresia AS membresia, estado, fechaInicio, fechaFin
+      $query = "SELECT nombre, cedula, edad, telefono, direccion, institucion,
+                 imagen, idMembresia AS membresia, estado, fechaInicio, fechaFin
           FROM miembros
           WHERE nombre = ? AND cedula = ?
           LIMIT 1";
+
 
 
         $stmt = $conn->prepare($query);

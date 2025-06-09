@@ -1,3 +1,4 @@
+
 <template>
   <div>
     <v-card>
@@ -15,6 +16,14 @@
             persistent-hint
             return-object
             single-line
+          />
+          <div class="text-subtitle-1 font-weight-bold mt-2">
+            Total a pagar: BsS {{ formatearBsS(montoFinal) }}
+          </div>
+          <v-checkbox
+            v-model="pagarInscripcion"
+            :label="`¿Agregar inscripción (BsS ${formatearBsS(5 * tasaDolar)})?`"
+            class="mt-3"
           />
           <v-row justify="center">
             <v-date-picker
@@ -61,7 +70,17 @@ export default {
       cargando: false,
       tasaDolar: 0,
       mostrarSnackbar: false,
+      pagarInscripcion: false,
     };
+  },
+
+  computed: {
+    montoFinal() {
+      if (!this.membresiaSeleccionada) return 0;
+      const precioUSD = parseFloat(this.membresiaSeleccionada.precio);
+      const inscripcion = this.pagarInscripcion ? 5 : 0;
+      return (precioUSD + inscripcion) * this.tasaDolar;
+    }
   },
 
   mounted() {
@@ -95,18 +114,16 @@ export default {
       if (!this.membresiaSeleccionada) return;
       this.cargando = true;
 
-      const tasaBCV = parseFloat(localStorage.getItem('tasaBCV')) || 0;
-      const precioUSD = parseFloat(this.membresiaSeleccionada.precio);
-      const montoBsS = (precioUSD * tasaBCV).toFixed(2);
-
       const payload = {
         metodo: 'pagar',
         pago: {
           cedula: this.cedula,
-          pago: montoBsS,
+          pago: this.montoFinal.toFixed(2),
           idMembresia: this.membresiaSeleccionada.id,
           duracion: this.membresiaSeleccionada.duracion,
           fecha: this.fechaSeleccionada,
+          monto: this.montoFinal,
+          inscripcion: this.pagarInscripcion ? 1 : 0,
           idUsuario: localStorage.getItem('idUsuario')
         }
       };

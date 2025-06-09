@@ -118,3 +118,8 @@ function obtenerMiembrosActivos() {
 }
 
 
+
+function obtenerPagosTotal() {
+    $sql = "SELECT COUNT(*) AS cantidad FROM pagos";
+    return select($sql)[0]['cantidad'];
+}

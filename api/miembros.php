@@ -4,7 +4,6 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// 🔁 Si es una petición de tipo OPTIONS (preflight), responder OK y salir
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -20,19 +19,17 @@ try {
         $nombre = $payload->nombre ?? '';
         $cedula = $payload->cedula ?? '';
 
-        if (!$nombre || !$cedula) {
+        if (trim($nombre) === '' || trim((string)$cedula) === '') {
             throw new Exception("Nombre o cédula faltante.");
         }
 
-        $conn = conectarBaseDatos(); // ✅ Usamos PDO
+        $conn = conectarBaseDatos();
 
-      $query = "SELECT nombre, cedula, edad, telefono, direccion, institucion,
-                 imagen, idMembresia AS membresia, estado, fechaInicio, fechaFin
-          FROM miembros
-          WHERE nombre = ? AND cedula = ?
-          LIMIT 1";
-
-
+        $query = "SELECT m.*, ms.nombre AS nombreMembresia 
+                  FROM miembros m 
+                  LEFT JOIN membresias ms ON m.idMembresia = ms.id 
+                  WHERE m.nombre = ? AND m.cedula = ?
+                  LIMIT 1";
 
         $stmt = $conn->prepare($query);
         $stmt->execute([$nombre, $cedula]);
@@ -53,7 +50,7 @@ try {
         throw new Exception("No se especificó ningún método.");
     }
 
-    $conn = conectarBaseDatos(); // Conexión PDO usada en métodos siguientes
+    $conn = conectarBaseDatos();
 
     switch ($metodo) {
         case "registrar":
@@ -86,7 +83,7 @@ try {
             $cedula = $payload->cedula;
             $duracion = intval($payload->duracion);
 
-            $query = "SELECT fechaFin FROM miembros WHERE cedula = ?";
+            $query = "SELECT m.*, ms.nombre AS nombreMembresia FROM miembros m LEFT JOIN membresias ms ON m.idMembresia = ms.id WHERE cedula = ?";
             $stmt = $conn->prepare($query);
             $stmt->execute([$cedula]);
             $miembro = $stmt->fetch(PDO::FETCH_ASSOC);

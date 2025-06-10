@@ -163,7 +163,7 @@
             <v-list-item><v-list-item-title><strong>Edad:</strong> {{ detalleMiembro.edad }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Teléfono:</strong> {{ detalleMiembro.telefono }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Dirección:</strong> {{ detalleMiembro.direccion }}</v-list-item-title></v-list-item>
-            <v-list-item><v-list-item-title><strong>Membresía:</strong> {{ detalleMiembro.membresia }}</v-list-item-title></v-list-item>
+            <v-list-item><v-list-item-title><strong>Plan:</strong> {{ detalleMiembro.nombreMembresia }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Estado:</strong> {{ detalleMiembro.estado }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Fecha Inicio:</strong> {{ detalleMiembro.fechaInicio }}</v-list-item-title></v-list-item>
             <v-list-item><v-list-item-title><strong>Fecha Fin:</strong> {{ detalleMiembro.fechaFin }}</v-list-item-title></v-list-item>

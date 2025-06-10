@@ -15,7 +15,7 @@
             <img class="imagen" :src="urlImagen(miembro.imagen)" alt="">
             <p>Teléfono: <b>{{ miembro.telefono }}</b></p>
             <p>Dirección: <b>{{ miembro.direccion }}</b></p>
-            <p>Miembro desde: <b>{{ miembro.fechaRegistro }}</b></p>
+            <p>Cliente desde: <b>{{ miembro.fechaRegistro }}</b></p>
         </div>
         <div class="credencial">
             <b>En caso de accidente, comunicarse con:</b>

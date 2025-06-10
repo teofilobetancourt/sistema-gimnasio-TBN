@@ -7,7 +7,7 @@
         color="deep-purple accent-4"
       ></v-progress-linear>
   
-      <h1>Membresías</h1>
+      <h1>Planes</h1>
   
       <v-data-table
         :headers="encabezadoTabla"
@@ -78,7 +78,7 @@
       },
       mostrarMensaje: false,
       encabezadoTabla: [
-        { text: "Membresía", sortable: true, value: "nombre" },
+        { text: "Mensualidad", sortable: true, value: "nombre" },
         { text: "Duración (días)", value: "duracion" },
         { text: "Precio (Bs.S)", value: "precioBs" },
         { text: "Opciones", value: "opciones", sortable: false }
@@ -131,7 +131,7 @@ methods: {
         if (eliminado) {
           this.mostrarDialogoEliminar = false;
           this.mostrarMensaje = true;
-          this.mensaje.texto = "Membresía eliminada";
+          this.mensaje.texto = "Mensualidad eliminada";
           this.mensaje.color = "success";
           this.obtenerMembresias();
         }
@@ -156,7 +156,7 @@ methods: {
           this.membresia = { nombre: "", duracion: "", precio: "" };
           this.mostrarDialogo = false;
           this.mostrarMensaje = true;
-          this.mensaje.texto = "Membresía registrada";
+          this.mensaje.texto = "Mensualidad registrada";
           this.mensaje.color = "success";
           this.obtenerMembresias();
           this.titulo = "Agregar";

@@ -86,7 +86,7 @@ export default {
     items: [
       { title: "Inicio", icon: "mdi-view-dashboard", link: "/" },
       { title: "Usuarios", icon: "mdi-account-box", link: "/usuarios" },
-      { title: "Mensualidades", icon: "mdi-weight-lifter", link: "/miembros" },
+      { title: "Clientes", icon: "mdi-weight-lifter", link: "/miembros" },
       { title: "Planes", icon: "mdi-wallet-membership", link: "/membresias" },
       { title: "Pagos", icon: "mdi-account-cash", link: "/pagos" },
       { title: "Configurar", icon: "mdi-cog", link: "/configurar" },

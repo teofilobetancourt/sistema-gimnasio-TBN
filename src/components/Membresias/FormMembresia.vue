@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <span class="text-h5">{{ titulo }} membresía</span>
+      <span class="text-h5">{{ titulo }} mensualidad</span>
     </v-card-title>
     <v-card-text>
       <v-container>
@@ -9,7 +9,7 @@
           <v-row>
             <v-col cols="12">
               <v-text-field
-                label="Nombre de la membresía"
+                label="Nombre de la mensualidad"
                 :rules="reglas"
                 required
                 hide-details="auto"

@@ -3,7 +3,7 @@
     <v-container fluid class="pa-2 overflow-x-auto">
       <v-row align="center" justify="space-between">
         <v-col cols="12" md="6">
-          <h1 class="text-h5 font-weight-bold">Miembros</h1>
+          <h1 class="text-h5 font-weight-bold">Clientes</h1>
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
@@ -43,7 +43,7 @@
             text-color="white"
             small
           >
-            {{ item.estado || 'SIN MEMBRESÍA' }}
+            {{ item.estado || 'SIN MENSUALIDAD' }}
           </v-chip>
         </template>
 
@@ -90,7 +90,7 @@
                 <v-icon>mdi-refresh</v-icon>
               </v-btn>
             </template>
-            <span>Renovar membresía</span>
+            <span>Renovar mensualidad</span>
           </v-tooltip>
         </template>
 
@@ -105,7 +105,7 @@
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-icon><v-icon color="indigo">mdi-calendar</v-icon></v-list-item-icon>
-                    <v-list-item-content><b>Miembro desde:</b> {{ item.fechaRegistro }}</v-list-item-content>
+                    <v-list-item-content><b>Cliente desde:</b> {{ item.fechaRegistro }}</v-list-item-content>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-icon><v-icon color="indigo">mdi-calendar-account</v-icon></v-list-item-icon>
@@ -174,9 +174,9 @@ export default {
       { text: "Nombre", sortable: true, value: "nombre" },
       { text: "Teléfono", sortable: false, value: "telefono" },
       { text: "Estado", sortable: true, value: "estado" },
-      { text: "Inicio membresía", sortable: true, value: "fechaInicio" },
-      { text: "Fin membresía", sortable: true, value: "fechaFin" },
-      { text: "Membresía", sortable: true, value: "membresia" },
+      { text: "Inicio mensualidad", sortable: true, value: "fechaInicio" },
+      { text: "Fin mensualidad", sortable: true, value: "fechaFin" },
+      { text: "Mensualidad", sortable: true, value: "membresia" },
       { text: "Opciones", value: "opciones", sortable: false },
     ],
     cargando: false,

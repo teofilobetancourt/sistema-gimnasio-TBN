@@ -1,20 +1,20 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
-import Membresias from '../components/Membresias/Membresias'
-import Miembros from '../components/Miembros/Miembros'
-import EditarMiembro from '../components/Miembros/EditarMiembro'
-import Usuarios from '../components/Usuarios/Usuarios'
-import NuevoMiembro from '../components/Miembros/NuevoMiembro'
-import NuevoUsuario from '../components/Usuarios/NuevoUsuario'
-import EditarUsuario from '../components/Usuarios/EditarUsuario'
-import CambiarPassword from '../components/Usuarios/CambiarPassword'
-import Pagos from '../components/Pagos/Pagos'
-import RegistrarVisita from '../components/Visitas/RegistrarVisita'
-import Visitas from '../components/Visitas/Visitas'
-import ConfiguracionComponent from '../components/Configuracion/ConfiguracionComponent'
-import InicioComponent from '../components/InicioComponent'
-import MiPerfil from '../components/Usuarios/MiPerfil'
+
+const InicioComponent = () => import(/* webpackChunkName: "inicio" */ '../components/InicioComponent')
+const Membresias = () => import(/* webpackChunkName: "membresias" */ '../components/Membresias/Membresias')
+const Miembros = () => import(/* webpackChunkName: "miembros" */ '../components/Miembros/Miembros')
+const NuevoMiembro = () => import(/* webpackChunkName: "miembros" */ '../components/Miembros/NuevoMiembro')
+const EditarMiembro = () => import(/* webpackChunkName: "miembros" */ '../components/Miembros/EditarMiembro')
+const Usuarios = () => import(/* webpackChunkName: "usuarios" */ '../components/Usuarios/Usuarios')
+const NuevoUsuario = () => import(/* webpackChunkName: "usuarios" */ '../components/Usuarios/NuevoUsuario')
+const EditarUsuario = () => import(/* webpackChunkName: "usuarios" */ '../components/Usuarios/EditarUsuario')
+const CambiarPassword = () => import(/* webpackChunkName: "usuarios" */ '../components/Usuarios/CambiarPassword')
+const MiPerfil = () => import(/* webpackChunkName: "usuarios" */ '../components/Usuarios/MiPerfil')
+const Pagos = () => import(/* webpackChunkName: "pagos" */ '../components/Pagos/Pagos')
+const RegistrarVisita = () => import(/* webpackChunkName: "visitas" */ '../components/Visitas/RegistrarVisita')
+const Visitas = () => import(/* webpackChunkName: "visitas" */ '../components/Visitas/Visitas')
+const ConfiguracionComponent = () => import(/* webpackChunkName: "configuracion" */ '../components/Configuracion/ConfiguracionComponent')
 Vue.use(Router)
 
 export default new Router({

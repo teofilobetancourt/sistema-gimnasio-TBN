@@ -258,15 +258,24 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
                 </div>
               </div>
               <input
+                readOnly
                 required
                 type="number"
                 step="0.01"
                 name="monto"
                 value={formData.monto}
-                onChange={handleChange}
-                className="w-full bg-gray-700/50 border border-white/10 rounded-lg px-4 py-2 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-700/30 border border-white/5 rounded-lg px-4 py-2 text-gray-400 font-bold cursor-not-allowed"
                 placeholder="0.00"
               />
+              {parseFloat(formData.monto) > 0 && (
+                <div className="mt-2 text-xs font-bold text-gray-500 italic animate-in fade-in slide-in-from-top-1 duration-300">
+                  Equivale a: <span className={formData.metodo === "Divisas" ? 'text-blue-400' : 'text-green-400'}>
+                    {formData.metodo === "Divisas" 
+                      ? `Bs ${(parseFloat(formData.monto) * tasaBCV).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                      : `$ ${(parseFloat(formData.monto) / tasaBCV).toFixed(2)}`}
+                  </span>
+                </div>
+              )}
             </div>
 
             {incluyeEntrenador && (

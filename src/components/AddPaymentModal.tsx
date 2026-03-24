@@ -174,13 +174,13 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
               </div>
             </div>
             <input
+              readOnly
               required
               type="number"
               step="0.01"
               name="monto"
               value={formData.monto}
-              onChange={handleChange}
-              className={`w-full bg-gray-800 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 ${isUSD ? 'border-green-500/30 focus:ring-green-500' : 'border-blue-500/30 focus:ring-blue-500'}`}
+              className={`w-full bg-gray-800/50 border rounded-lg px-4 py-2 text-gray-400 font-bold cursor-not-allowed ${isUSD ? 'border-green-500/10' : 'border-blue-500/10'}`}
               placeholder="0.00"
             />
             {montoNum > 0 && (

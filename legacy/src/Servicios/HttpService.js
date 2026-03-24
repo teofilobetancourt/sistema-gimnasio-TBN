@@ -1,7 +1,7 @@
-const RUTA_GLOBAL = "http://localhost/sistema-gimnasio/api/"
+const RUTA_GLOBAL = "http://localhost:8012/sistema-gimnasio-TBN/api/"
 
 const HttpService = {
-    async registrar(datos, ruta){
+    async registrar(datos, ruta) {
         const respuesta = await fetch(RUTA_GLOBAL + ruta, {
             method: "post",
             body: JSON.stringify(datos),
@@ -10,7 +10,7 @@ const HttpService = {
         return resultado
     },
 
-    async obtenerConDatos(datos, ruta){
+    async obtenerConDatos(datos, ruta) {
         const respuesta = await fetch(RUTA_GLOBAL + ruta, {
             method: "post",
             body: JSON.stringify(datos),
@@ -20,7 +20,7 @@ const HttpService = {
     },
 
 
-    async obtener(ruta){
+    async obtener(ruta) {
         let respuesta = await fetch(RUTA_GLOBAL + ruta)
         let datos = await respuesta.json()
         return datos
@@ -37,4 +37,4 @@ const HttpService = {
 
 }
 
-export default  HttpService 
+export default HttpService 

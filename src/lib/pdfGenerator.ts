@@ -51,12 +51,16 @@ export const generateReceipt = (pago: any, miembro: any) => {
   doc.text(`Nombre: ${miembro?.nombre || "Cliente General"}`, 20, 92);
   doc.text(`Cédula: ${pago.matricula || miembro?.matricula || "N/A"}`, 20, 100);
 
+  const isVES = pago.monedaOriginal === "VES" || (pago.metodo !== "Divisas" && !pago.monedaOriginal);
+  const symbol = isVES ? "Bs" : "$";
+  const displayMonto = pago.montoOriginal || pago.monto || "0.00";
+
   // Payment Details Table
   const tableData = [
     [
-      pago.membresia ? `Membresía: ${pago.membresia}` : "Mensualidad General",
+      pago.nombreMembresia ? `Membresía: ${pago.nombreMembresia}` : "Mensualidad General",
       "1",
-      `$${pago.monto || "0.00"}`
+      `${symbol} ${displayMonto}`
     ]
   ];
 
@@ -81,7 +85,13 @@ export const generateReceipt = (pago: any, miembro: any) => {
   doc.setFont("helvetica", "bold");
   doc.text("TOTAL PAGADO:", pageWidth - 50, finalY);
   doc.setTextColor(0, 150, 0);
-  doc.text(`$${pago.monto || "0.00"}`, pageWidth - 15, finalY, { align: "right" });
+  doc.text(`${symbol} ${displayMonto}`, pageWidth - 15, finalY, { align: "right" });
+  
+  if (pago.metodo) {
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Método: ${pago.metodo}`, 15, finalY);
+  }
 
   // Footer Message
   doc.setTextColor(150, 150, 150);

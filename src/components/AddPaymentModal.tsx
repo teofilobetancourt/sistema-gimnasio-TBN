@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { useCollection } from "@/hooks/useCollection";
-import { addDoc, collection, serverTimestamp, query, where, getDocs, limit, updateDoc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, query, where, getDocs, limit, updateDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { X, DollarSign } from "lucide-react";
+import { X, DollarSign, Calculator, Info } from "lucide-react";
 import { generateReceipt } from "@/lib/pdfGenerator";
 
 interface AddPaymentModalProps {
@@ -24,8 +24,23 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
   });
 
   const [loading, setLoading] = useState(false);
+  const [tasaBCV, setTasaBCV] = useState(1);
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(doc(db, "ajustes", "general"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setTasaBCV(parseFloat(data.tasaBCV) || 1);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   if (!isOpen) return null;
+
+  const isUSD = formData.metodo === "Divisas";
+  const montoNum = parseFloat(formData.monto) || 0;
+  const conversionValue = isUSD ? montoNum * tasaBCV : montoNum / tasaBCV;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +49,15 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
       const selectedPlan = membresias.find((m: any) => m.id === formData.idMembresia);
       
       // Registrar el pago
+      const montoFinalUSD = isUSD ? montoNum : montoNum / tasaBCV;
+      const montoFinalBs = isUSD ? montoNum * tasaBCV : montoNum;
+
       await addDoc(collection(db, "pagos"), {
         ...formData,
+        monto: montoFinalUSD.toFixed(2), // Siempre guardamos el monto base en $ para reportes
+        montoOriginal: formData.monto,
+        monedaOriginal: isUSD ? "USD" : "VES",
+        tasaBCVUsada: tasaBCV,
         nombreMembresia: selectedPlan?.nombre || "Varios",
         fecha: new Date().toISOString().split('T')[0],
         createdAt: serverTimestamp(),
@@ -125,7 +147,15 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Monto ($)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-400">
+                {isUSD ? "Monto ($)" : "Monto (Bs)"}
+              </label>
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase">
+                <Calculator className="h-3 w-3" />
+                Tasa: {tasaBCV.toLocaleString()} Bs/$
+              </div>
+            </div>
             <input
               required
               type="number"
@@ -133,9 +163,16 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
               name="monto"
               value={formData.monto}
               onChange={handleChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full bg-gray-800 border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 ${isUSD ? 'border-green-500/30 focus:ring-green-500' : 'border-blue-500/30 focus:ring-blue-500'}`}
               placeholder="0.00"
             />
+            {montoNum > 0 && (
+               <div className="mt-2 text-xs font-bold text-gray-500 italic animate-in fade-in slide-in-from-top-1 duration-300">
+                  Equivale a: <span className={isUSD ? 'text-blue-400' : 'text-green-400'}>
+                    {isUSD ? `Bs ${conversionValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$ ${conversionValue.toFixed(2)}`}
+                  </span>
+               </div>
+            )}
           </div>
 
           <div>
@@ -173,6 +210,13 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
             </div>
           )}
 
+          <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-3 flex items-start gap-3">
+             <Info className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+             <p className="text-[10px] text-gray-500 leading-tight">
+               El sistema guarda el monto base en <b>USD</b> para tus reportes globales, pero registra la moneda original para el recibo.
+             </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Método de Pago</label>
             <select
@@ -181,10 +225,10 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
               onChange={handleChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="Efectivo">Efectivo</option>
               <option value="Divisas">Divisas ($)</option>
-              <option value="Pago Móvil">Pago Móvil</option>
-              <option value="Transferencia">Transferencia</option>
+              <option value="Efectivo">Efectivo (Bs)</option>
+              <option value="Pago Móvil">Pago Móvil (Bs)</option>
+              <option value="Transferencia">Transferencia (Bs)</option>
             </select>
           </div>
 

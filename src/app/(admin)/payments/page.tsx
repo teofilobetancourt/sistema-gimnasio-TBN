@@ -24,7 +24,8 @@ export default function PaymentsPage() {
   
   const byMethod = pagos.reduce((acc: any, p: any) => {
     const method = p.metodo || "Otro";
-    acc[method] = (acc[method] || 0) + (parseFloat(p.monto) || 0);
+    const monto = parseFloat(p.montoOriginal || p.monto) || 0;
+    acc[method] = (acc[method] || 0) + monto;
     return acc;
   }, {});
 
@@ -69,28 +70,28 @@ export default function PaymentsPage() {
             <div className="h-12 w-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
                <Banknote className="h-6 w-6 text-orange-500" />
             </div>
-            <div>
-               <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Efectivo (Bs/$)</div>
-               <div className="text-2xl font-black text-white">${(byMethod["Efectivo"] || 0).toLocaleString()}</div>
-            </div>
+             <div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Efectivo</div>
+                <div className="text-2xl font-black text-white">Bs {(byMethod["Efectivo"] || 0).toLocaleString()}</div>
+             </div>
          </div>
          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl flex items-center gap-4">
             <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
                <ArrowUpRight className="h-6 w-6 text-purple-500" />
             </div>
-            <div>
-               <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Pago Móvil</div>
-               <div className="text-2xl font-black text-white">${(byMethod["Pago Móvil"] || 0).toLocaleString()}</div>
-            </div>
+             <div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Pago Móvil</div>
+                <div className="text-2xl font-black text-white">Bs {(byMethod["Pago Móvil"] || 0).toLocaleString()}</div>
+             </div>
          </div>
          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl flex items-center gap-4">
             <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
                <Wallet className="h-6 w-6 text-blue-500" />
             </div>
-            <div>
-               <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Transferencias</div>
-               <div className="text-2xl font-black text-white">${(byMethod["Transferencia"] || 0).toLocaleString()}</div>
-            </div>
+             <div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Transferencias</div>
+                <div className="text-2xl font-black text-white">Bs {(byMethod["Transferencia"] || 0).toLocaleString()}</div>
+             </div>
          </div>
       </div>
 
@@ -160,7 +161,10 @@ export default function PaymentsPage() {
                       <div className="font-medium text-gray-300 italic">{pago.nombreMembresia || "Producto / Servicio"}</div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="text-lg font-black text-green-400">${parseFloat(pago.monto).toFixed(2)}</div>
+                      <div className="text-lg font-black text-green-400">
+                        {pago.monedaOriginal === "VES" || (pago.metodo !== "Divisas" && !pago.monedaOriginal) ? "Bs " : "$ "}
+                        {parseFloat(pago.montoOriginal || pago.monto).toFixed(2)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 hidden lg:table-cell">
                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${

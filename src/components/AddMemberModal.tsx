@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { X, Camera, User } from "lucide-react";
+import { X, Camera, User, DollarSign, Calculator } from "lucide-react";
 import MemberPhotoUpload from "./MemberPhotoUpload";
 
 interface AddMemberModalProps {
@@ -29,9 +29,22 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
     idMembresia: "",
     idEntrenador: "",
     fotoUrl: "",
+    metodo: "Efectivo",
+    monto: "",
   });
 
   const [loading, setLoading] = useState(false);
+  const [tasaBCV, setTasaBCV] = useState(1);
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(doc(db, "ajustes", "general"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setTasaBCV(parseFloat(data.tasaBCV) || 1);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -51,7 +64,9 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
       const finalIdEntrenador = selectedPlan?.incluyeEntrenador ? formData.idEntrenador : "";
       const selectedTrainer = finalIdEntrenador ? entrenadores?.find((t: any) => t.id === finalIdEntrenador) : null;
 
-      await addDoc(collection(db, "miembros"), {
+
+      // Registro de Miembro
+      const memberRef = await addDoc(collection(db, "miembros"), {
         ...formData,
         idEntrenador: finalIdEntrenador,
         fechaFin,
@@ -59,6 +74,26 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         nombreEntrenador: selectedTrainer?.nombre || "",
         fechaRegistro: serverTimestamp(),
       });
+
+      // Registro Automático de Pago (si hay plan seleccionado)
+      if (formData.idMembresia && formData.monto) {
+        const isUSD = formData.metodo === "Divisas";
+        const montoNum = parseFloat(formData.monto) || 0;
+        const montoFinalUSD = isUSD ? montoNum : montoNum / tasaBCV;
+
+        await addDoc(collection(db, "pagos"), {
+          matricula: formData.matricula,
+          monto: montoFinalUSD.toFixed(2),
+          montoOriginal: formData.monto,
+          monedaOriginal: isUSD ? "USD" : "VES",
+          metodo: formData.metodo,
+          idMembresia: formData.idMembresia,
+          nombreMembresia: selectedPlan?.nombre || "",
+          fecha: new Date().toISOString().split('T')[0],
+          createdAt: serverTimestamp(),
+        });
+      }
+
       onClose();
       setFormData({
         nombre: "",
@@ -73,6 +108,8 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         idMembresia: "",
         idEntrenador: "",
         fotoUrl: "",
+        metodo: "Efectivo",
+        monto: "",
       });
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -83,7 +120,24 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let newFormData = { ...formData, [name]: value };
+
+    // Auto-precio al cambiar MEMBRESIA o METODO
+    if (name === "idMembresia" || name === "metodo") {
+      const plan = membresias?.find((m: any) => m.id === (name === "idMembresia" ? value : formData.idMembresia));
+      const method = name === "metodo" ? value : formData.metodo;
+      if (plan) {
+        const costoUSD = parseFloat(plan.costo) || 0;
+        if (method === "Divisas") {
+          newFormData.monto = costoUSD.toString();
+        } else {
+          newFormData.monto = (costoUSD * tasaBCV).toFixed(2);
+        }
+      }
+    }
+
+    setFormData(newFormData);
   };
 
   const selectedPlanObj = membresias?.find((m: any) => m.id === formData.idMembresia);
@@ -165,16 +219,54 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
             <div className={`col-span-1 ${incluyeEntrenador ? 'md:col-span-1' : 'md:col-span-2'}`}>
               <label className="block text-sm font-medium text-gray-400 mb-1">Plan de Inicio (Opcional)</label>
               <select
+                required
                 name="idMembresia"
                 value={formData.idMembresia}
                 onChange={handleChange}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Ninguno (Solo registro)</option>
+                <option value="">Seleccionar plan obligatorio...</option>
                 {membresias?.map((plan: any) => (
                   <option key={plan.id} value={plan.id}>{plan.nombre} (${plan.costo})</option>
                 ))}
               </select>
+            </div>
+
+            <div className="col-span-1 md:col-span-1">
+              <label className="block text-sm font-medium text-gray-400 mb-1">Método de Pago</label>
+              <select
+                name="metodo"
+                value={formData.metodo}
+                onChange={handleChange}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="Divisas">Divisas ($)</option>
+                <option value="Efectivo">Efectivo (Bs)</option>
+                <option value="Pago Móvil">Pago Móvil (Bs)</option>
+                <option value="Transferencia">Transferencia (Bs)</option>
+              </select>
+            </div>
+
+            <div className="col-span-1 md:col-span-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-400">
+                  {formData.metodo === "Divisas" ? "Monto a Pagar ($)" : "Monto a Pagar (Bs)"}
+                </label>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase">
+                  <Calculator className="h-3 w-3" />
+                  Tasa: {tasaBCV.toLocaleString()}
+                </div>
+              </div>
+              <input
+                required
+                type="number"
+                step="0.01"
+                name="monto"
+                value={formData.monto}
+                onChange={handleChange}
+                className="w-full bg-gray-700/50 border border-white/10 rounded-lg px-4 py-2 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="0.00"
+              />
             </div>
 
             {incluyeEntrenador && (

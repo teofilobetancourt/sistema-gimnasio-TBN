@@ -114,7 +114,24 @@ export default function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProp
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let newFormData = { ...formData, [name]: value };
+
+    // Auto-precio al cambiar MEMBRESIA o METODO
+    if (name === "idMembresia" || name === "metodo") {
+      const plan = membresias?.find((m: any) => m.id === (name === "idMembresia" ? value : formData.idMembresia));
+      const method = name === "metodo" ? value : formData.metodo;
+      if (plan) {
+        const costoUSD = parseFloat(plan.costo) || 0;
+        if (method === "Divisas") {
+          newFormData.monto = costoUSD.toString();
+        } else {
+          newFormData.monto = (costoUSD * tasaBCV).toFixed(2);
+        }
+      }
+    }
+
+    setFormData(newFormData);
   };
 
   const selectedPlanObj = membresias?.find((m: any) => m.id === formData.idMembresia);
